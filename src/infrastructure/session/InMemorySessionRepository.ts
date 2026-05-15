@@ -16,7 +16,11 @@ const now = (): Date => new Date();
 export class InMemorySessionRepository implements ISessionRepository {
   private sessions: Map<string, Session> = new Map();
 
-  async create(userId: string, label?: string, inheritFromSessionId?: string): Promise<Session> {
+  async createSession(
+    userId: string,
+    label?: string,
+    inheritFromSessionId?: string,
+  ): Promise<Session> {
     let exercises: Exercise[] = [];
 
     if (inheritFromSessionId) {

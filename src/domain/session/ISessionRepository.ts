@@ -24,13 +24,13 @@ export interface GetSessionsQuery {
 // Domain defines the contract; Infrastructure implements it.
 // NO fetch(), NO HTTP details here.
 export interface ISessionRepository {
-  create(userId: string, label?: string, inheritFromSessionId?: string): Promise<Session>;
+  createSession(userId: string, label?: string, inheritFromSessionId?: string): Promise<Session>;
   renameSession(sessionId: string, label: string): Promise<Session>;
   getById(sessionId: string): Promise<Session>;
   deleteSession(sessionId: string): Promise<void>;
   finish(sessionId: string): Promise<Session>;
 
-  // Returns first active session for userId, or null if none exists.
+  // Returns the first active session for userId, or null if none exists.
   // Calls GET /api/sessions/active — takes items[0] ?? null.
   getActive(userId: string): Promise<Session | null>;
 

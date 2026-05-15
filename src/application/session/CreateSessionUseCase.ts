@@ -27,6 +27,6 @@ export class CreateSessionUseCase {
 
   async execute(userId: string, label?: string): Promise<Session> {
     const autoLabel = label ?? generateSessionLabel();
-    return this.sessionRepo.create(userId, autoLabel);
+    return this.sessionRepo.createSession(userId, autoLabel);
   }
 }

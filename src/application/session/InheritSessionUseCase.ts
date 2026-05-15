@@ -9,6 +9,6 @@ export class InheritSessionUseCase {
 
   async execute(userId: string, inheritFromSessionId: string, label?: string): Promise<Session> {
     const autoLabel = label ?? generateSessionLabel();
-    return this.sessionRepo.create(userId, autoLabel, inheritFromSessionId);
+    return this.sessionRepo.createSession(userId, autoLabel, inheritFromSessionId);
   }
 }

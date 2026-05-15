@@ -40,7 +40,11 @@ const toQueryString = (params: Record<string, string | number | undefined>): str
 };
 
 export class HttpSessionRepository implements ISessionRepository {
-  async create(userId: string, label?: string, inheritFromSessionId?: string): Promise<Session> {
+  async createSession(
+    userId: string,
+    label?: string,
+    inheritFromSessionId?: string,
+  ): Promise<Session> {
     const raw = await apiRequest<Record<string, unknown>>('/api/sessions', {
       method: 'POST',
       body: JSON.stringify({ userId, label, inheritFromSessionId }),
