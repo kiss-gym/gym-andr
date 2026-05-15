@@ -52,12 +52,6 @@ paths:
         - Sessions
       summary: 'Get sessions with optional filtering, sorting, and pagination.'
       parameters:
-        - name: userId
-          in: query
-          description: Filter by user ID.
-          schema:
-            type: string
-            format: uuid
         - name: status
           in: query
           description: Filter by session status (Active or Finished).
@@ -158,6 +152,7 @@ paths:
     delete:
       tags:
         - Sessions
+      summary: Delete a session.
       parameters:
         - name: sessionId
           in: path
@@ -166,8 +161,14 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
-          description: OK
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
   '/api/sessions/{sessionId}/exercises':
     post:
       tags:
@@ -371,11 +372,6 @@ paths:
         - Sessions
       summary: Get active sessions with optional filtering and pagination.
       parameters:
-        - name: userId
-          in: query
-          schema:
-            type: string
-            format: uuid
         - name: page
           in: query
           schema:
@@ -395,70 +391,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SessionResponsePagedResponse'
-  /api/users/register:
-    post:
-      tags:
-        - Users
-      summary: Register a new user.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterRequest'
-          text/json:
-            schema:
-              $ref: '#/components/schemas/RegisterRequest'
-          application/*+json:
-            schema:
-              $ref: '#/components/schemas/RegisterRequest'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserResponse'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemDetails'
-  /api/users/login:
-    post:
-      tags:
-        - Users
-      summary: "Login a user (Mocked for development).\r\nSimulates authentication by associating the session with an email.\r\nSets the user context for subsequent requests.\r\nIn production, the client will authenticate directly with Supabase."
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LoginRequest'
-          text/json:
-            schema:
-              $ref: '#/components/schemas/LoginRequest'
-          application/*+json:
-            schema:
-              $ref: '#/components/schemas/LoginRequest'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemDetails'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemDetails'
   /api/users/me:
     get:
       tags:
@@ -496,13 +428,8 @@ components:
           nullable: true
       additionalProperties: false
     CreateSessionRequest:
-      required:
-        - userId
       type: object
       properties:
-        userId:
-          type: string
-          format: uuid
         label:
           type: string
           nullable: true
@@ -563,14 +490,6 @@ components:
           items:
             $ref: '#/components/schemas/ExercisePropertyResponse'
       additionalProperties: false
-    LoginRequest:
-      required:
-        - email
-      type: object
-      properties:
-        email:
-          type: string
-      additionalProperties: false
     ProblemDetails:
       type: object
       properties:
@@ -591,17 +510,6 @@ components:
           type: string
           nullable: true
       additionalProperties: { }
-    RegisterRequest:
-      required:
-        - email
-        - name
-      type: object
-      properties:
-        email:
-          type: string
-        name:
-          type: string
-      additionalProperties: false
     RenameSessionRequest:
       required:
         - label
