@@ -1,7 +1,8 @@
 import { IUserRepository } from '@domain/user/IUserRepository';
 import { User } from '@domain/user/User';
 
-// Called on app startup to restore the authenticated user from SecureStore userId
+// Fetches the authenticated user profile from the API.
+// Called by AuthContext after Supabase confirms a valid session.
 export class GetCurrentUserUseCase {
   constructor(private readonly userRepo: IUserRepository) {}
 

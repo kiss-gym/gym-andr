@@ -3,21 +3,17 @@
 
 const BASE_URL = process.env['EXPO_PUBLIC_API_URL'] ?? 'http://192.168.0.164:5000';
 
-let _userId: string | null = null;
+let _authToken: string | null = null;
 
-// Called by AuthContext after login / restore from SecureStore
-export const setCurrentUserId = (userId: string | null): void => {
-  _userId = userId;
+// Called by AuthContext via onAuthStateChange when session changes
+export const setAuthToken = (token: string | null): void => {
+  _authToken = token;
 };
-
-export const getCurrentUserId = (): string | null => _userId;
 
 export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    // Dev: pass userId as a header so the server can identify the caller.
-    // Production: replace it with Authorization: Bearer <supabase_token>
-    ...(_userId ? { 'X-User-Id': _userId } : {}),
+    ...(_authToken ? { Authorization: `Bearer ${_authToken}` } : {}),
   };
 
   const response = await fetch(`${BASE_URL}${path}`, {

@@ -18,8 +18,6 @@ import { FinishSessionUseCase } from '@application/session/FinishSessionUseCase'
 import { GetActiveSessionUseCase } from '@application/session/GetActiveSessionUseCase';
 import { GetSessionsUseCase } from '@application/session/GetSessionsUseCase';
 import { GetSessionByIdUseCase } from '@application/session/GetSessionByIdUseCase';
-import { LoginUseCase } from '@application/user/LoginUseCase';
-import { RegisterUseCase } from '@application/user/RegisterUseCase';
 import { GetCurrentUserUseCase } from '@application/user/GetCurrentUserUseCase';
 
 const useMock = process.env['EXPO_PUBLIC_USE_MOCK'] === 'true';
@@ -43,17 +41,5 @@ export const serviceLocator = {
   getSessions: new GetSessionsUseCase(sessionRepo),
 
   // User use cases
-  login: new LoginUseCase(userRepo),
-  register: new RegisterUseCase(userRepo),
   getCurrentUser: new GetCurrentUserUseCase(userRepo),
-
-  // Auth persistence helpers
-  restoreUserId: (): Promise<string | null> =>
-    useMock ? Promise.resolve(null) : HttpUserRepository.restoreUserId(),
-
-  clearUserId: (): Promise<void> =>
-    useMock ? Promise.resolve() : HttpUserRepository.clearUserId(),
-
-  restoreLastLoginEmail: (): Promise<string | null> =>
-    useMock ? Promise.resolve(null) : HttpUserRepository.restoreLastLoginEmail(),
 } as const;
