@@ -8,9 +8,6 @@ import { Exercise } from '@domain/session/Exercise';
 import { Session } from '@domain/session/Session';
 import { PagedResponse } from '@domain/PagedResponse';
 
-// Maps raw API responses to domain entities.
-// The server returns ISO strings for dates — we convert to Date objects here.
-
 const mapExercise = (raw: Record<string, unknown>): Exercise => ({
   id: raw['id'] as string,
   autoLabel: raw['autoLabel'] as string,
@@ -32,7 +29,6 @@ const mapSession = (raw: Record<string, unknown>): Session => ({
   exercises: ((raw['exercises'] as Record<string, unknown>[]) ?? []).map(mapExercise),
 });
 
-// Build query string from an object — omits undefined values
 const toQueryString = (params: Record<string, string | number | undefined>): string => {
   const entries = Object.entries(params).filter(([, v]) => v !== undefined);
   if (entries.length === 0) return '';
@@ -40,14 +36,10 @@ const toQueryString = (params: Record<string, string | number | undefined>): str
 };
 
 export class HttpSessionRepository implements ISessionRepository {
-  async createSession(
-    userId: string,
-    label?: string,
-    inheritFromSessionId?: string,
-  ): Promise<Session> {
+  async createSession(label?: string, inheritFromSessionId?: string): Promise<Session> {
     const raw = await apiRequest<Record<string, unknown>>('/api/sessions', {
       method: 'POST',
-      body: JSON.stringify({ userId, label, inheritFromSessionId }),
+      body: JSON.stringify({ label, inheritFromSessionId }),
     });
     return mapSession(raw);
   }
@@ -76,8 +68,8 @@ export class HttpSessionRepository implements ISessionRepository {
     return mapSession(raw);
   }
 
-  async getActive(userId: string): Promise<Session | null> {
-    const qs = toQueryString({ userId, page: 1, pageSize: 1 });
+  async getActive(): Promise<Session | null> {
+    const qs = toQueryString({ page: 1, pageSize: 1 });
     try {
       const raw = await apiRequest<{ items?: Record<string, unknown>[] }>(
         `/api/sessions/active${qs}`,
@@ -86,7 +78,6 @@ export class HttpSessionRepository implements ISessionRepository {
       return first ? mapSession(first) : null;
     } catch (e) {
       const msg = (e as Error).message;
-      // Server returns 404 or 405 when no active session exists — let us treat it as null
       if (msg.includes('404') || msg.includes('405')) return null;
       throw e;
     }
@@ -94,7 +85,6 @@ export class HttpSessionRepository implements ISessionRepository {
 
   async getSessions(query: GetSessionsQuery): Promise<PagedResponse<Session>> {
     const qs = toQueryString({
-      userId: query.userId,
       status: query.status,
       sort: query.sort,
       page: query.page,
@@ -139,9 +129,7 @@ export class HttpSessionRepository implements ISessionRepository {
   async startExercise(sessionId: string, exerciseId: string): Promise<Exercise> {
     const raw = await apiRequest<Record<string, unknown>>(
       `/api/sessions/${sessionId}/exercises/${exerciseId}/start`,
-      {
-        method: 'POST',
-      },
+      { method: 'POST' },
     );
     return mapExercise(raw);
   }

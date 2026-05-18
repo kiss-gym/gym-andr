@@ -2,13 +2,11 @@ import { ISessionRepository } from '@domain/session/ISessionRepository';
 import { Session } from '@domain/session/Session';
 import { generateSessionLabel } from './CreateSessionUseCase';
 
-// Copies exercises from a previous session as Pending.
-// Auto-names the copy with the current time slot + weekday if no label provided.
 export class InheritSessionUseCase {
   constructor(private readonly sessionRepo: ISessionRepository) {}
 
-  async execute(userId: string, inheritFromSessionId: string, label?: string): Promise<Session> {
+  async execute(inheritFromSessionId: string, label?: string): Promise<Session> {
     const autoLabel = label ?? generateSessionLabel();
-    return this.sessionRepo.createSession(userId, autoLabel, inheritFromSessionId);
+    return this.sessionRepo.createSession(autoLabel, inheritFromSessionId);
   }
 }

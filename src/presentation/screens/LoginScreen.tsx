@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import { useAuth } from '@presentation/context/AuthContext';
 import { AppTheme, useTheme } from '@presentation/theme';
@@ -10,38 +10,20 @@ import {
   PrimaryButton,
 } from '@presentation/components/AuthComponents';
 import { LoginScreenProps } from '@presentation/navigation/types';
-import { serviceLocator } from '@src/ServiceLocator';
-
-// Single Responsibility: this screen owns the login flow only.
-// Registration → RegisterScreen (navigate via stack).
-// Supabase migration: only LoginUseCase changes, this screen stays as-is.
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const theme = useTheme();
   const { login, isLoading, error } = useAuth();
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const s = styles(theme);
 
-  useEffect(() => {
-    const restoreEmail = async (): Promise<void> => {
-      const lastEmail = await serviceLocator.restoreLastLoginEmail();
-      if (lastEmail) setEmail(lastEmail);
-    };
-    void restoreEmail();
-  }, []);
-
-  const canSubmit = email.trim().length > 0 && !isLoading;
+  const canSubmit = email.trim().length > 0 && password.length > 0 && !isLoading;
 
   const handleLogin = async (): Promise<void> => {
     if (!canSubmit) return;
-    try {
-      await login(email.trim());
-      // Navigation to SessionHub is handled by RootNavigator auth guard —
-      // once user is set in AuthContext, navigator re-renders automatically.
-    } catch {
-      // error state is in AuthContext — displayed by AuthError below
-    }
+    await login(email.trim(), password);
   };
 
   return (
@@ -60,6 +42,19 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
             autoCapitalize="none"
             autoCorrect={false}
             autoFocus
+            returnKeyType="next"
+            editable={!isLoading}
+          />
+
+          <AuthField
+            label="Password"
+            theme={theme}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="••••••••"
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
             returnKeyType="go"
             onSubmitEditing={handleLogin}
             editable={!isLoading}
@@ -88,17 +83,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
 const styles = (theme: AppTheme): ReturnType<typeof StyleSheet.create> =>
   StyleSheet.create({
-    root: {
-      flex: 1,
-      backgroundColor: theme.background,
-    },
-    inner: {
-      flex: 1,
-      paddingHorizontal: 28,
-      justifyContent: 'center',
-      gap: 32,
-    },
-    form: {
-      gap: 12,
-    },
+    root: { flex: 1, backgroundColor: theme.background },
+    inner: { flex: 1, paddingHorizontal: 28, justifyContent: 'center', gap: 32 },
+    form: { gap: 12 },
   });

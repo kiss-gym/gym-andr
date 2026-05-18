@@ -3,7 +3,6 @@ import { Session, runningExercise } from '@domain/session/Session';
 import { Exercise } from '@domain/session/Exercise';
 import { AddExerciseInput } from '@domain/session/ISessionRepository';
 import { serviceLocator } from '@src/ServiceLocator';
-import { useAuth } from './AuthContext';
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
@@ -35,24 +34,17 @@ function sessionReducer(state: SessionState, action: SessionAction): SessionStat
   switch (action.type) {
     case 'LOADING':
       return { ...state, isLoading: true, error: null };
-
     case 'ERROR':
       return { ...state, isLoading: false, error: action.payload };
-
     case 'SESSION_SET':
       return { currentSession: action.payload, isLoading: false, error: null };
-
     case 'EXERCISE_UPSERT': {
       if (!state.currentSession) return state;
       const incoming = action.payload;
       const exists = state.currentSession.exercises.some(e => e.id === incoming.id);
-
       let exercises = exists
         ? state.currentSession.exercises.map(e => (e.id === incoming.id ? incoming : e))
         : [...state.currentSession.exercises, incoming];
-
-      // Mirror server behavior: when a new Running exercise arrives,
-      // auto-finish the previous Running one in local state too.
       if (incoming.status === 'Running') {
         exercises = exercises.map(e =>
           e.id !== incoming.id && e.status === 'Running'
@@ -60,14 +52,12 @@ function sessionReducer(state: SessionState, action: SessionAction): SessionStat
             : e,
         );
       }
-
       return {
         ...state,
         isLoading: false,
         currentSession: { ...state.currentSession, exercises },
       };
     }
-
     case 'EXERCISE_DELETED': {
       if (!state.currentSession) return state;
       return {
@@ -78,10 +68,8 @@ function sessionReducer(state: SessionState, action: SessionAction): SessionStat
         },
       };
     }
-
     case 'RESET':
       return initialState;
-
     default:
       return state;
   }
@@ -110,19 +98,12 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 
 export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(sessionReducer, initialState);
-  const { user } = useAuth();
 
-  const requireSession = (): Session => {
+  const requireActiveSession = useCallback((): Session => {
     if (!state.currentSession) throw new Error('No active session');
     return state.currentSession;
-  };
+  }, [state.currentSession]);
 
-  const requireUser = (): string => {
-    if (!user) throw new Error('Not authenticated');
-    return user.id;
-  };
-
-  // Loads a session by ID into context — used when coming from SessionHub "Continue"
   const restoreSession = useCallback(
     async (sessionId: string): Promise<void> => {
       if (state.currentSession?.id === sessionId) return;
@@ -141,40 +122,32 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const startNewSession = useCallback(async (): Promise<Session> => {
     dispatch({ type: 'LOADING' });
     try {
-      const session = await serviceLocator.createSession.execute(requireUser());
+      const session = await serviceLocator.createSession.execute();
       dispatch({ type: 'SESSION_SET', payload: session });
       return session;
     } catch (e) {
       dispatch({ type: 'ERROR', payload: (e as Error).message });
       throw e;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, []);
 
-  const inheritLastSession = useCallback(
-    async (inheritFromSessionId: string): Promise<Session> => {
-      dispatch({ type: 'LOADING' });
-      try {
-        const session = await serviceLocator.inheritSession.execute(
-          requireUser(),
-          inheritFromSessionId,
-        );
-        dispatch({ type: 'SESSION_SET', payload: session });
-        return session;
-      } catch (e) {
-        dispatch({ type: 'ERROR', payload: (e as Error).message });
-        throw e;
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user],
-  );
+  const inheritLastSession = useCallback(async (inheritFromSessionId: string): Promise<Session> => {
+    dispatch({ type: 'LOADING' });
+    try {
+      const session = await serviceLocator.inheritSession.execute(inheritFromSessionId);
+      dispatch({ type: 'SESSION_SET', payload: session });
+      return session;
+    } catch (e) {
+      dispatch({ type: 'ERROR', payload: (e as Error).message });
+      throw e;
+    }
+  }, []);
 
   const addExercise = useCallback(
     async (input: AddExerciseInput): Promise<Exercise> => {
       dispatch({ type: 'LOADING' });
       try {
-        const exercise = await serviceLocator.addExercise.execute(requireSession().id, input);
+        const exercise = await serviceLocator.addExercise.execute(requireActiveSession().id, input);
         dispatch({ type: 'EXERCISE_UPSERT', payload: exercise });
         return exercise;
       } catch (e) {
@@ -183,7 +156,7 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.currentSession?.id],
+    [state.currentSession?.id, requireActiveSession],
   );
 
   const startExercise = useCallback(
@@ -191,7 +164,7 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       dispatch({ type: 'LOADING' });
       try {
         const exercise = await serviceLocator.startExercise.execute(
-          requireSession().id,
+          requireActiveSession().id,
           exerciseId,
         );
         dispatch({ type: 'EXERCISE_UPSERT', payload: exercise });
@@ -202,7 +175,7 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.currentSession?.id],
+    [state.currentSession?.id, requireActiveSession],
   );
 
   const finishExercise = useCallback(
@@ -210,7 +183,7 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       dispatch({ type: 'LOADING' });
       try {
         const exercise = await serviceLocator.finishExercise.execute(
-          requireSession().id,
+          requireActiveSession().id,
           exerciseId,
         );
         dispatch({ type: 'EXERCISE_UPSERT', payload: exercise });
@@ -221,14 +194,14 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.currentSession?.id],
+    [state.currentSession?.id, requireActiveSession],
   );
 
   const deleteExercise = useCallback(
     async (exerciseId: string): Promise<void> => {
       dispatch({ type: 'LOADING' });
       try {
-        await serviceLocator.deleteExercise.execute(requireSession().id, exerciseId);
+        await serviceLocator.deleteExercise.execute(requireActiveSession().id, exerciseId);
         dispatch({ type: 'EXERCISE_DELETED', payload: exerciseId });
       } catch (e) {
         dispatch({ type: 'ERROR', payload: (e as Error).message });
@@ -236,13 +209,13 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.currentSession?.id],
+    [state.currentSession?.id, requireActiveSession],
   );
 
   const finishSession = useCallback(async (): Promise<Session> => {
     dispatch({ type: 'LOADING' });
     try {
-      const session = await serviceLocator.finishSession.execute(requireSession().id);
+      const session = await serviceLocator.finishSession.execute(requireActiveSession().id);
       dispatch({ type: 'SESSION_SET', payload: session });
       return session;
     } catch (e) {

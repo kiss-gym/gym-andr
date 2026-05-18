@@ -2,18 +2,14 @@ import { Exercise } from './Exercise';
 import { Session, SessionStatus } from './Session';
 import { PagedResponse } from '../PagedResponse';
 
-// Input shape for adding a new exercise (mirrors OpenAPI AddExerciseRequest)
 export interface AddExerciseInput {
   autoLabel: string;
   photoUrl?: string;
   properties?: { name: string; value: string }[];
 }
 
-// Query params for GET /api/sessions
-// sort format: 'property[:asc|desc]' — supported: finishedAt, createdAt
-// Example: 'finishedAt:desc'
+// Query params for GET /api/sessions — userId removed, server reads it from JWT
 export interface GetSessionsQuery {
-  userId?: string;
   status?: SessionStatus;
   sort?: string;
   page?: number;
@@ -21,22 +17,15 @@ export interface GetSessionsQuery {
 }
 
 // Repository interface — Dependency Inversion boundary.
-// Domain defines the contract; Infrastructure implements it.
-// NO fetch(), NO HTTP details here.
+// NO HTTP details here.
 export interface ISessionRepository {
-  createSession(userId: string, label?: string, inheritFromSessionId?: string): Promise<Session>;
+  createSession(label?: string, inheritFromSessionId?: string): Promise<Session>;
   renameSession(sessionId: string, label: string): Promise<Session>;
   getById(sessionId: string): Promise<Session>;
   deleteSession(sessionId: string): Promise<void>;
   finish(sessionId: string): Promise<Session>;
-
-  // Returns the first active session for userId, or null if none exists.
-  // Calls GET /api/sessions/active — takes items[0] ?? null.
-  getActive(userId: string): Promise<Session | null>;
-
-  // Returns paged list of sessions — supports status filter and sort.
+  getActive(): Promise<Session | null>;
   getSessions(query: GetSessionsQuery): Promise<PagedResponse<Session>>;
-
   addExercise(sessionId: string, input: AddExerciseInput): Promise<Exercise>;
   startExercise(sessionId: string, exerciseId: string): Promise<Exercise>;
   finishExercise(sessionId: string, exerciseId: string): Promise<Exercise>;

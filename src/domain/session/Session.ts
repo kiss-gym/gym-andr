@@ -12,7 +12,7 @@ export interface Session {
   readonly status: SessionStatus;
   readonly inheritedFromSessionId?: string;
   readonly label?: string;
-  readonly exercises: Exercise[];
+  readonly exercises: readonly Exercise[];
 }
 
 // Derived queries — keep business logic in domain, not in components

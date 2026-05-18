@@ -11,26 +11,25 @@ import {
 } from '@presentation/components/AuthComponents';
 import { RegisterScreenProps } from '@presentation/navigation/types';
 
-// Single Responsibility: this screen owns registration flow only.
-// Supabase migration: only RegisterUseCase changes, this screen stays as-is.
-
 export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
   const theme = useTheme();
   const { register, isLoading, error } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  // Ref lets "Next" on the name keyboard jump focus to email field
   const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
 
   const s = styles(theme);
 
-  const canSubmit = name.trim().length > 0 && email.trim().length > 0 && !isLoading;
+  const canSubmit =
+    name.trim().length > 0 && email.trim().length > 0 && password.length >= 6 && !isLoading;
 
   const handleRegister = async (): Promise<void> => {
     if (!canSubmit) return;
     try {
-      await register(email.trim(), name.trim());
+      await register(email.trim(), name.trim(), password);
       // RootNavigator auth guard navigates to SessionHub automatically
     } catch {
       // error state is in AuthContext — displayed by AuthError below
@@ -66,11 +65,27 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
+            returnKeyType="next"
+            onSubmitEditing={() => passwordRef.current?.focus()}
+            editable={!isLoading}
+            // @ts-expect-error — ref forwarding via TextInputProps
+            ref={emailRef}
+          />
+
+          <AuthField
+            label="Password"
+            theme={theme}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Min. 6 characters"
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
             returnKeyType="go"
             onSubmitEditing={handleRegister}
             editable={!isLoading}
             // @ts-expect-error — ref forwarding via TextInputProps
-            ref={emailRef}
+            ref={passwordRef}
           />
 
           <AuthError message={error} theme={theme} />
@@ -96,17 +111,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
 
 const styles = (theme: AppTheme): ReturnType<typeof StyleSheet.create> =>
   StyleSheet.create({
-    root: {
-      flex: 1,
-      backgroundColor: theme.background,
-    },
-    inner: {
-      flex: 1,
-      paddingHorizontal: 28,
-      justifyContent: 'center',
-      gap: 32,
-    },
-    form: {
-      gap: 12,
-    },
+    root: { flex: 1, backgroundColor: theme.background },
+    inner: { flex: 1, paddingHorizontal: 28, justifyContent: 'center', gap: 32 },
+    form: { gap: 12 },
   });

@@ -2,7 +2,7 @@ import { ISessionRepository } from '@domain/session/ISessionRepository';
 import { Exercise } from '@domain/session/Exercise';
 
 // Starts a Pending (inherited) exercise.
-// Any currently running exercise is auto-finished by the server.
+// Auto-finishes any currently running exercise
 export class StartExerciseUseCase {
   constructor(private readonly sessionRepo: ISessionRepository) {}
 

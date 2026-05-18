@@ -16,14 +16,13 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
   const s = styles();
 
   const { sessions, selectedSession, isLoading, reload, selectSession } = useSessionHubData();
-
   const [isActing, setIsActing] = useState(false);
 
   // ── Navigation ──────────────────────────────────────────────────────────────
 
   const handleNavigate = useCallback(
     (sessionId: string, active: boolean): void => {
-      selectSession(sessionId); // ← select first
+      selectSession(sessionId);
       if (active) {
         navigation.navigate('ActiveSession', { sessionId });
       } else {
@@ -92,12 +91,9 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
     navigation.navigate('ActiveSession', { sessionId: selectedSession.id });
   }, [selectedSession, navigation]);
 
-  // ── Create New ──────────────────────────────────────────────────────────────
+  // ── Create New — userId removed ─────────────────────────────────────────────
 
   const handleCreateNew = useCallback((): void => {
-    if (!user) return;
-
-    // If active session exists — ask to finish it first
     const activeSession = sessions.find(s => isActive(s));
     if (activeSession) {
       Alert.alert(
@@ -124,7 +120,6 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
       return;
     }
 
-    // The session is not active — create directly
     setIsActing(true);
     startNewSession()
       .then(session => navigation.navigate('ActiveSession', { sessionId: session.id }))
@@ -132,14 +127,13 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
         Alert.alert('Error', (e as Error).message);
         setIsActing(false);
       });
-  }, [user, sessions, startNewSession, navigation]);
+  }, [sessions, startNewSession, navigation]);
 
-  // ── Copy Selected ───────────────────────────────────────────────────────────
+  // ── Copy Selected — userId removed ──────────────────────────────────────────
 
   const handleInheritSelected = useCallback((): void => {
-    if (!user || !selectedSession) return;
+    if (!selectedSession) return;
 
-    // If active session exists — ask to finish it first
     const activeSession = sessions.find(s => isActive(s));
     if (activeSession) {
       Alert.alert(
@@ -173,16 +167,14 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
         Alert.alert('Error', (e as Error).message);
         setIsActing(false);
       });
-  }, [user, selectedSession, sessions, inheritLastSession, navigation]);
+  }, [selectedSession, sessions, inheritLastSession, navigation]);
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
     <View style={s.root}>
-      {/* ── Area 1: Header ── */}
-      <HubHeader userName={user?.name ?? 'User'} onLogout={logout} />
+      <HubHeader userName={user?.name ?? 'Athlete'} onLogout={logout} />
 
-      {/* ── Area 2: Session list ── */}
       <ScrollView
         style={s.list}
         contentContainerStyle={s.listContent}
@@ -200,7 +192,6 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
         ))}
       </ScrollView>
 
-      {/* ── Area 3: Action area ── */}
       <HubActionArea
         selectedSession={selectedSession}
         hasAnySessions={sessions.length > 0}
@@ -213,19 +204,9 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
   );
 };
 
-// ── Styles ────────────────────────────────────────────────────────────────────
-
 const styles = (): ReturnType<typeof StyleSheet.create> =>
   StyleSheet.create({
-    root: {
-      flex: 1,
-    },
-    list: {
-      flex: 1,
-    },
-    listContent: {
-      paddingHorizontal: 16,
-      paddingTop: 12,
-      paddingBottom: 8,
-    },
+    root: { flex: 1 },
+    list: { flex: 1 },
+    listContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   });

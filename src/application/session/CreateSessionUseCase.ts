@@ -1,11 +1,6 @@
 import { ISessionRepository } from '@domain/session/ISessionRepository';
 import { Session } from '@domain/session/Session';
 
-// ── Auto-naming ───────────────────────────────────────────────────────────────
-// Generates a contemporary label when the user does not provide one.
-// Format: "Morning · Monday", "Evening · Friday", etc.
-// Pure function — no side effects, easily testable.
-
 const getTimeSlot = (hour: number): string => {
   if (hour >= 5 && hour < 12) return 'Morning';
   if (hour >= 12 && hour < 17) return 'Afternoon';
@@ -20,13 +15,11 @@ export const generateSessionLabel = (): string => {
   return `${slot} · ${day}`;
 };
 
-// ── Use case ──────────────────────────────────────────────────────────────────
-
 export class CreateSessionUseCase {
   constructor(private readonly sessionRepo: ISessionRepository) {}
 
-  async execute(userId: string, label?: string): Promise<Session> {
+  async execute(label?: string): Promise<Session> {
     const autoLabel = label ?? generateSessionLabel();
-    return this.sessionRepo.createSession(userId, autoLabel);
+    return this.sessionRepo.createSession(autoLabel);
   }
 }

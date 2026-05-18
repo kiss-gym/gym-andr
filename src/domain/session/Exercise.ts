@@ -1,7 +1,7 @@
 import { ExerciseProperty } from './ExerciseProperty';
 import { ExerciseStatus } from './ExerciseStatus';
 
-// Entity — identified by id, lifecycle managed by Session aggregate
+// Entity — identified by id. Lifecycle managed by Session aggregate
 export interface Exercise {
   readonly id: string;
   readonly autoLabel: string;

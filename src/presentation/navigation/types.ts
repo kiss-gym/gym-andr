@@ -7,7 +7,6 @@ export type RootStackParamList = {
   ActiveSession: { sessionId: string };
   SessionDetail: { sessionId: string };
   SessionFinished: { sessionId: string };
-  // Modal — presented over ActiveSessionScreen
   AddExercise: { sessionId: string };
 };
 

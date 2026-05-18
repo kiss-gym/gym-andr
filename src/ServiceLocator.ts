@@ -1,10 +1,7 @@
 // Dependency Injection wiring — no framework, just a plain object.
-// Swap HTTP ↔ InMemory by setting EXPO_PUBLIC_USE_MOCK=true in .env
 
 import { HttpSessionRepository } from '@infrastructure/session/HttpSessionRepository';
 import { HttpUserRepository } from '@infrastructure/user/HttpUserRepository';
-import { InMemorySessionRepository } from '@infrastructure/session/InMemorySessionRepository';
-import { InMemoryUserRepository } from '@infrastructure/user/InMemoryUserRepository';
 
 import { CreateSessionUseCase } from '@application/session/CreateSessionUseCase';
 import { InheritSessionUseCase } from '@application/session/InheritSessionUseCase';
@@ -20,10 +17,8 @@ import { GetSessionsUseCase } from '@application/session/GetSessionsUseCase';
 import { GetSessionByIdUseCase } from '@application/session/GetSessionByIdUseCase';
 import { GetCurrentUserUseCase } from '@application/user/GetCurrentUserUseCase';
 
-const useMock = process.env['EXPO_PUBLIC_USE_MOCK'] === 'true';
-
-const sessionRepo = useMock ? new InMemorySessionRepository() : new HttpSessionRepository();
-const userRepo = useMock ? new InMemoryUserRepository() : new HttpUserRepository();
+const sessionRepo = new HttpSessionRepository();
+const userRepo = new HttpUserRepository();
 
 export const serviceLocator = {
   // Session use cases
