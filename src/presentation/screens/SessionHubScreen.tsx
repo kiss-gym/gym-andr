@@ -173,7 +173,7 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
 
   return (
     <View style={s.root}>
-      <HubHeader userName={user?.name ?? 'Athlete'} onLogout={logout} />
+      <HubHeader userName={user?.name ?? user?.email ?? 'Athlete'} onLogout={logout} />
 
       <ScrollView
         style={s.list}
