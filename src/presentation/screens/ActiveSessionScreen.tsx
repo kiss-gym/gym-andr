@@ -294,7 +294,7 @@ export const ActiveSessionScreen: React.FC<ActiveSessionScreenProps> = ({ route,
       <View style={s.header}>
         <Pressable style={s.backBtn} hitSlop={12} onPress={() => navigation.navigate('SessionHub')}>
           <Text style={s.backArrow}>‹</Text>
-          <Text style={s.backLabel}>Hub</Text>
+          <Text style={s.backLabel}>Sessions</Text>
         </Pressable>
 
         {editingTitle ? (
@@ -402,7 +402,7 @@ export const ActiveSessionScreen: React.FC<ActiveSessionScreenProps> = ({ route,
         })}
 
         {sortedExercises.length === 0 && !draft && (
-          <Text style={s.emptyList}>{'Tap "+ Add New" to start your first exercise.'}</Text>
+          <Text style={s.emptyList}>{'Tap "+ Add New" to add your first exercise.'}</Text>
         )}
       </ScrollView>
 
@@ -491,7 +491,9 @@ export const ActiveSessionScreen: React.FC<ActiveSessionScreenProps> = ({ route,
               onPress={handleAddNew}
               disabled={!canAddNew}
             >
-              <Text style={[s.btnSecondaryLabel, !canAddNew && s.btnDisabledLabel]}>+ Add New</Text>
+              <Text style={[s.btnSecondaryLabel, !canAddNew && s.btnDisabledLabel]}>
+                + Add New Exercise
+              </Text>
             </Pressable>
           )}
         </View>
