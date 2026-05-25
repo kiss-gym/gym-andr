@@ -1,7 +1,12 @@
 import React, { createContext, useCallback, useContext, useReducer } from 'react';
 import { Session, runningExercise } from '@domain/session/Session';
 import { Exercise } from '@domain/session/Exercise';
-import { AddExerciseInput } from '@domain/session/ISessionRepository';
+import { ExerciseSet } from '@domain/session/ExerciseSet';
+import {
+  AddExerciseInput,
+  UpdateExerciseInput,
+  UpdateSetInput,
+} from '@domain/session/ISessionRepository';
 import { serviceLocator } from '@src/ServiceLocator';
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -20,6 +25,8 @@ type SessionAction =
   | { type: 'SESSION_SET'; payload: Session }
   | { type: 'EXERCISE_UPSERT'; payload: Exercise }
   | { type: 'EXERCISE_DELETED'; payload: string }
+  | { type: 'SET_UPSERT'; payload: { exerciseId: string; set: ExerciseSet } }
+  | { type: 'SET_DELETED'; payload: { exerciseId: string; setId: string } }
   | { type: 'RESET' };
 
 // ── Reducer ───────────────────────────────────────────────────────────────────
@@ -38,6 +45,7 @@ function sessionReducer(state: SessionState, action: SessionAction): SessionStat
       return { ...state, isLoading: false, error: action.payload };
     case 'SESSION_SET':
       return { currentSession: action.payload, isLoading: false, error: null };
+
     case 'EXERCISE_UPSERT': {
       if (!state.currentSession) return state;
       const incoming = action.payload;
@@ -58,6 +66,7 @@ function sessionReducer(state: SessionState, action: SessionAction): SessionStat
         currentSession: { ...state.currentSession, exercises },
       };
     }
+
     case 'EXERCISE_DELETED': {
       if (!state.currentSession) return state;
       return {
@@ -68,6 +77,36 @@ function sessionReducer(state: SessionState, action: SessionAction): SessionStat
         },
       };
     }
+
+    case 'SET_UPSERT': {
+      if (!state.currentSession) return state;
+      const { exerciseId, set } = action.payload;
+      const exercises = state.currentSession.exercises.map(e => {
+        if (e.id !== exerciseId) return e;
+        const exists = e.sets.some(s => s.id === set.id);
+        const sets = exists ? e.sets.map(s => (s.id === set.id ? set : s)) : [...e.sets, set];
+        return { ...e, sets };
+      });
+      return {
+        ...state,
+        isLoading: false,
+        currentSession: { ...state.currentSession, exercises },
+      };
+    }
+
+    case 'SET_DELETED': {
+      if (!state.currentSession) return state;
+      const { exerciseId, setId } = action.payload;
+      const exercises = state.currentSession.exercises.map(e => {
+        if (e.id !== exerciseId) return e;
+        return { ...e, sets: e.sets.filter(s => s.id !== setId) };
+      });
+      return {
+        ...state,
+        currentSession: { ...state.currentSession, exercises },
+      };
+    }
+
     case 'RESET':
       return initialState;
     default:
@@ -83,6 +122,7 @@ interface SessionContextValue extends SessionState {
   startNewSession: () => Promise<Session>;
   inheritLastSession: (inheritFromSessionId: string) => Promise<Session>;
   addExercise: (input: AddExerciseInput) => Promise<Exercise>;
+  updateExercise: (exerciseId: string, input: UpdateExerciseInput) => Promise<Exercise>;
   startExercise: (exerciseId: string) => Promise<Exercise>;
   finishExercise: (exerciseId: string) => Promise<Exercise>;
   deleteExercise: (exerciseId: string) => Promise<void>;
@@ -90,6 +130,15 @@ interface SessionContextValue extends SessionState {
   renameSession: (sessionId: string, label: string) => Promise<Session>;
   deleteSession: (sessionId: string) => Promise<void>;
   resetSession: () => void;
+  // Sets
+  addSet: (exerciseId: string, hasSets: boolean) => Promise<ExerciseSet>;
+  updateSet: (exerciseId: string, setId: string, input: UpdateSetInput) => Promise<ExerciseSet>;
+  deleteSet: (exerciseId: string, setId: string) => Promise<void>;
+  toggleSetCompletion: (
+    exerciseId: string,
+    setId: string,
+    currentlyCompleted: boolean,
+  ) => Promise<ExerciseSet>;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -146,8 +195,9 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const addExercise = useCallback(
     async (input: AddExerciseInput): Promise<Exercise> => {
       dispatch({ type: 'LOADING' });
+      const sessionId = requireActiveSession().id;
       try {
-        const exercise = await serviceLocator.addExercise.execute(requireActiveSession().id, input);
+        const exercise = await serviceLocator.addExercise.execute(sessionId, input);
         dispatch({ type: 'EXERCISE_UPSERT', payload: exercise });
         return exercise;
       } catch (e) {
@@ -223,7 +273,7 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       throw e;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.currentSession?.id]);
+  }, [state.currentSession?.id, requireActiveSession]);
 
   const renameSession = useCallback(async (sessionId: string, label: string): Promise<Session> => {
     dispatch({ type: 'LOADING' });
@@ -250,6 +300,81 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const resetSession = useCallback(() => dispatch({ type: 'RESET' }), []);
 
+  // ── Set actions ───────────────────────────────────────────────────────────
+
+  const addSet = useCallback(
+    async (exerciseId: string, hasSets: boolean): Promise<ExerciseSet> => {
+      dispatch({ type: 'LOADING' });
+      const sessionId = requireActiveSession().id;
+      try {
+        const set = await serviceLocator.addSet.execute(sessionId, exerciseId, hasSets);
+        dispatch({ type: 'SET_UPSERT', payload: { exerciseId, set } });
+        return set;
+      } catch (e) {
+        dispatch({ type: 'ERROR', payload: (e as Error).message });
+        throw e;
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state.currentSession?.id, requireActiveSession],
+  );
+
+  const updateSet = useCallback(
+    async (exerciseId: string, setId: string, input: UpdateSetInput): Promise<ExerciseSet> => {
+      const sessionId = requireActiveSession().id;
+      try {
+        const set = await serviceLocator.updateSet.execute(sessionId, exerciseId, setId, input);
+        dispatch({ type: 'SET_UPSERT', payload: { exerciseId, set } });
+        return set;
+      } catch (e) {
+        dispatch({ type: 'ERROR', payload: (e as Error).message });
+        throw e;
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state.currentSession?.id, requireActiveSession],
+  );
+
+  const deleteSet = useCallback(
+    async (exerciseId: string, setId: string): Promise<void> => {
+      const sessionId = requireActiveSession().id;
+      try {
+        await serviceLocator.deleteSet.execute(sessionId, exerciseId, setId);
+        dispatch({ type: 'SET_DELETED', payload: { exerciseId, setId } });
+      } catch (e) {
+        dispatch({ type: 'ERROR', payload: (e as Error).message });
+        throw e;
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state.currentSession?.id, requireActiveSession],
+  );
+
+  const toggleSetCompletion = useCallback(
+    async (
+      exerciseId: string,
+      setId: string,
+      currentlyCompleted: boolean,
+    ): Promise<ExerciseSet> => {
+      const sessionId = requireActiveSession().id;
+      try {
+        const set = await serviceLocator.toggleSetCompletion.execute(
+          sessionId,
+          exerciseId,
+          setId,
+          currentlyCompleted,
+        );
+        dispatch({ type: 'SET_UPSERT', payload: { exerciseId, set } });
+        return set;
+      } catch (e) {
+        dispatch({ type: 'ERROR', payload: (e as Error).message });
+        throw e;
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state.currentSession?.id, requireActiveSession],
+  );
+
   return (
     <SessionContext.Provider
       value={{
@@ -259,6 +384,7 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
         startNewSession,
         inheritLastSession,
         addExercise,
+        updateExercise,
         startExercise,
         finishExercise,
         deleteExercise,
@@ -266,6 +392,10 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
         renameSession,
         deleteSession,
         resetSession,
+        addSet,
+        updateSet,
+        deleteSet,
+        toggleSetCompletion,
       }}
     >
       {children}

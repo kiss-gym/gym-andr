@@ -1,21 +1,36 @@
 import { apiRequest } from '@infrastructure/api/ApiClient';
 import {
   AddExerciseInput,
+  AddSetInput,
   GetSessionsQuery,
   ISessionRepository,
+  UpdateExerciseInput,
+  UpdateSetInput,
 } from '@domain/session/ISessionRepository';
 import { Exercise } from '@domain/session/Exercise';
+import { ExerciseSet } from '@domain/session/ExerciseSet';
 import { Session } from '@domain/session/Session';
 import { PagedResponse } from '@domain/PagedResponse';
+
+// ── Mappers ───────────────────────────────────────────────────────────────────
+
+const mapSet = (raw: Record<string, unknown>): ExerciseSet => ({
+  id: raw['id'] as string,
+  setNumber: raw['setNumber'] as number,
+  isCompleted: raw['isCompleted'] as boolean,
+  weight: raw['weight'] as number | null,
+  repetitions: raw['repetitions'] as number | null,
+});
 
 const mapExercise = (raw: Record<string, unknown>): Exercise => ({
   id: raw['id'] as string,
   autoLabel: raw['autoLabel'] as string,
-  photoUrl: raw['photoUrl'] as string | undefined,
+  photoUrl: (raw['photoUrl'] as string | null) ?? null,
   startedAt: raw['startedAt'] ? new Date(raw['startedAt'] as string) : undefined,
   realEndAt: raw['realEndAt'] ? new Date(raw['realEndAt'] as string) : undefined,
   status: raw['status'] as Exercise['status'],
   properties: (raw['properties'] as { name: string; value: string }[]) ?? [],
+  sets: ((raw['sets'] as Record<string, unknown>[]) ?? []).map(mapSet),
 });
 
 const mapSession = (raw: Record<string, unknown>): Session => ({
@@ -35,7 +50,11 @@ const toQueryString = (params: Record<string, string | number | undefined>): str
   return '?' + entries.map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`).join('&');
 };
 
+// ── Repository ────────────────────────────────────────────────────────────────
+
 export class HttpSessionRepository implements ISessionRepository {
+  // ── Session ─────────────────────────────────────────────────────────────────
+
   async createSession(label?: string, inheritFromSessionId?: string): Promise<Session> {
     const raw = await apiRequest<Record<string, unknown>>('/api/sessions', {
       method: 'POST',
@@ -114,6 +133,8 @@ export class HttpSessionRepository implements ISessionRepository {
     }
   }
 
+  // ── Exercise ─────────────────────────────────────────────────────────────────
+
   async addExercise(sessionId: string, input: AddExerciseInput): Promise<Exercise> {
     const raw = await apiRequest<Record<string, unknown>>(`/api/sessions/${sessionId}/exercises`, {
       method: 'POST',
@@ -126,10 +147,25 @@ export class HttpSessionRepository implements ISessionRepository {
     return mapExercise(raw);
   }
 
+  async updateExercise(
+    sessionId: string,
+    exerciseId: string,
+    input: UpdateExerciseInput,
+  ): Promise<Exercise> {
+    const raw = await apiRequest<Record<string, unknown>>(
+      `/api/sessions/${sessionId}/exercises/${exerciseId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(input),
+      },
+    );
+    return mapExercise(raw);
+  }
+
   async startExercise(sessionId: string, exerciseId: string): Promise<Exercise> {
     const raw = await apiRequest<Record<string, unknown>>(
       `/api/sessions/${sessionId}/exercises/${exerciseId}/start`,
-      { method: 'POST' },
+      { method: 'POST', body: JSON.stringify({}) },
     );
     return mapExercise(raw);
   }
@@ -146,5 +182,64 @@ export class HttpSessionRepository implements ISessionRepository {
     await apiRequest<void>(`/api/sessions/${sessionId}/exercises/${exerciseId}`, {
       method: 'DELETE',
     });
+  }
+
+  // ── Sets ─────────────────────────────────────────────────────────────────────
+
+  async addSet(sessionId: string, exerciseId: string, input: AddSetInput): Promise<ExerciseSet> {
+    const raw = await apiRequest<Record<string, unknown>>(
+      `/api/sessions/${sessionId}/exercises/${exerciseId}/sets`,
+      {
+        method: 'POST',
+        body: JSON.stringify(input),
+      },
+    );
+    return mapSet(raw);
+  }
+
+  async copyLastSet(sessionId: string, exerciseId: string): Promise<ExerciseSet> {
+    const raw = await apiRequest<Record<string, unknown>>(
+      `/api/sessions/${sessionId}/exercises/${exerciseId}/sets/copy-last`,
+      { method: 'POST' },
+    );
+    return mapSet(raw);
+  }
+
+  async updateSet(
+    sessionId: string,
+    exerciseId: string,
+    setId: string,
+    input: UpdateSetInput,
+  ): Promise<ExerciseSet> {
+    const raw = await apiRequest<Record<string, unknown>>(
+      `/api/sessions/${sessionId}/exercises/${exerciseId}/sets/${setId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(input),
+      },
+    );
+    return mapSet(raw);
+  }
+
+  async deleteSet(sessionId: string, exerciseId: string, setId: string): Promise<void> {
+    await apiRequest<void>(`/api/sessions/${sessionId}/exercises/${exerciseId}/sets/${setId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async completeSet(sessionId: string, exerciseId: string, setId: string): Promise<ExerciseSet> {
+    const raw = await apiRequest<Record<string, unknown>>(
+      `/api/sessions/${sessionId}/exercises/${exerciseId}/sets/${setId}/complete`,
+      { method: 'POST' },
+    );
+    return mapSet(raw);
+  }
+
+  async uncompleteSet(sessionId: string, exerciseId: string, setId: string): Promise<ExerciseSet> {
+    const raw = await apiRequest<Record<string, unknown>>(
+      `/api/sessions/${sessionId}/exercises/${exerciseId}/sets/${setId}/uncomplete`,
+      { method: 'POST' },
+    );
+    return mapSet(raw);
   }
 }

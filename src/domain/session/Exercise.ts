@@ -1,15 +1,16 @@
-import { ExerciseProperty } from './ExerciseProperty';
+import { ExerciseSet } from './ExerciseSet';
 import { ExerciseStatus } from './ExerciseStatus';
 
-// Entity — identified by id. Lifecycle managed by Session aggregate
+// Entity — identified by id, lifecycle managed by Session aggregate
 export interface Exercise {
   readonly id: string;
   readonly autoLabel: string;
-  readonly photoUrl?: string;
-  readonly startedAt?: Date;
-  readonly realEndAt?: Date;
+  readonly photoUrl: string | null;
+  readonly startedAt: Date | undefined;
+  readonly realEndAt: Date | undefined;
   readonly status: ExerciseStatus;
-  readonly properties: ExerciseProperty[];
+  readonly properties: { name: string; value: string }[];
+  readonly sets: ExerciseSet[]; // ← new, always present
 }
 
 // Derive elapsed seconds for a running exercise (UI timer)
