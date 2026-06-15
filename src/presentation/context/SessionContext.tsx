@@ -209,6 +209,23 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     [state.currentSession?.id, requireActiveSession],
   );
 
+  const updateExercise = useCallback(
+    async (exerciseId: string, input: UpdateExerciseInput): Promise<Exercise> => {
+      dispatch({ type: 'LOADING' });
+      const sessionId = requireActiveSession().id;
+      try {
+        const exercise = await serviceLocator.updateExercise.execute(sessionId, exerciseId, input);
+        dispatch({ type: 'EXERCISE_UPSERT', payload: exercise });
+        return exercise;
+      } catch (e) {
+        dispatch({ type: 'ERROR', payload: (e as Error).message });
+        throw e;
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state.currentSession?.id, requireActiveSession],
+  );
+
   const startExercise = useCallback(
     async (exerciseId: string): Promise<Exercise> => {
       dispatch({ type: 'LOADING' });
