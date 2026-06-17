@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useReducer } from 'react';
-import { Session, runningExercise } from '@domain/session/Session';
+import { Session } from '@domain/session/Session';
 import { Exercise } from '@domain/session/Exercise';
 import { ExerciseSet } from '@domain/session/ExerciseSet';
 import {
@@ -50,16 +50,9 @@ function sessionReducer(state: SessionState, action: SessionAction): SessionStat
       if (!state.currentSession) return state;
       const incoming = action.payload;
       const exists = state.currentSession.exercises.some(e => e.id === incoming.id);
-      let exercises = exists
+      const exercises = exists
         ? state.currentSession.exercises.map(e => (e.id === incoming.id ? incoming : e))
         : [...state.currentSession.exercises, incoming];
-      if (incoming.status === 'Running') {
-        exercises = exercises.map(e =>
-          e.id !== incoming.id && e.status === 'Running'
-            ? { ...e, status: 'Finished' as const, realEndAt: new Date() }
-            : e,
-        );
-      }
       return {
         ...state,
         isLoading: false,
@@ -117,14 +110,11 @@ function sessionReducer(state: SessionState, action: SessionAction): SessionStat
 // ── Context value ─────────────────────────────────────────────────────────────
 
 interface SessionContextValue extends SessionState {
-  runningExercise: Exercise | undefined;
   restoreSession: (sessionId: string) => Promise<void>;
   startNewSession: () => Promise<Session>;
   inheritLastSession: (inheritFromSessionId: string) => Promise<Session>;
   addExercise: (input: AddExerciseInput) => Promise<Exercise>;
   updateExercise: (exerciseId: string, input: UpdateExerciseInput) => Promise<Exercise>;
-  startExercise: (exerciseId: string) => Promise<Exercise>;
-  finishExercise: (exerciseId: string) => Promise<Exercise>;
   deleteExercise: (exerciseId: string) => Promise<void>;
   finishSession: () => Promise<Session>;
   renameSession: (sessionId: string, label: string) => Promise<Session>;
@@ -215,44 +205,6 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const sessionId = requireActiveSession().id;
       try {
         const exercise = await serviceLocator.updateExercise.execute(sessionId, exerciseId, input);
-        dispatch({ type: 'EXERCISE_UPSERT', payload: exercise });
-        return exercise;
-      } catch (e) {
-        dispatch({ type: 'ERROR', payload: (e as Error).message });
-        throw e;
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.currentSession?.id, requireActiveSession],
-  );
-
-  const startExercise = useCallback(
-    async (exerciseId: string): Promise<Exercise> => {
-      dispatch({ type: 'LOADING' });
-      try {
-        const exercise = await serviceLocator.startExercise.execute(
-          requireActiveSession().id,
-          exerciseId,
-        );
-        dispatch({ type: 'EXERCISE_UPSERT', payload: exercise });
-        return exercise;
-      } catch (e) {
-        dispatch({ type: 'ERROR', payload: (e as Error).message });
-        throw e;
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.currentSession?.id, requireActiveSession],
-  );
-
-  const finishExercise = useCallback(
-    async (exerciseId: string): Promise<Exercise> => {
-      dispatch({ type: 'LOADING' });
-      try {
-        const exercise = await serviceLocator.finishExercise.execute(
-          requireActiveSession().id,
-          exerciseId,
-        );
         dispatch({ type: 'EXERCISE_UPSERT', payload: exercise });
         return exercise;
       } catch (e) {
@@ -396,14 +348,11 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     <SessionContext.Provider
       value={{
         ...state,
-        runningExercise: state.currentSession ? runningExercise(state.currentSession) : undefined,
         restoreSession,
         startNewSession,
         inheritLastSession,
         addExercise,
         updateExercise,
-        startExercise,
-        finishExercise,
         deleteExercise,
         finishSession,
         renameSession,

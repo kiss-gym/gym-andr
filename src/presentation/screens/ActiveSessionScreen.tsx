@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -12,8 +13,13 @@ import {
   View,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { elapsedSeconds } from '@domain/session/Exercise';
-import { isFinished, isPending, isRunning } from '@domain/session/ExerciseStatus';
+import {
+  Exercise,
+  completedSetCount,
+  isExerciseDone,
+  isExerciseInProgress,
+} from '@domain/session/Exercise';
+import { Session } from '@domain/session/Session';
 import { useSession } from '@presentation/context/SessionContext';
 import { AppTheme, useTheme } from '@presentation/theme';
 import { ActiveSessionScreenProps } from '@presentation/navigation/types';
@@ -39,21 +45,220 @@ const randomSuggestion = (): string =>
 const stripSuggestionMark = (name: string): string =>
   name.endsWith('?') ? name.slice(0, -1).trim() : name.trim();
 
-const isSuggestionName = (name: string): boolean => name.endsWith('?');
+const isSuggestion = (name: string): boolean => name.endsWith('?');
 
-// ── New exercise draft ────────────────────────────────────────────────────────
+// ── Exercise list item ────────────────────────────────────────────────────────
 
-interface NewExerciseDraft {
-  name: string;
-  photoUri: string | null;
+interface ExerciseItemProps {
+  exercise: Exercise;
+  isSelected: boolean;
+  isSessionActive: boolean;
+  onSelect: () => void;
+  onNavigate: () => void;
+  onDelete: () => void;
+  theme: AppTheme;
+  toggleSetCompletion: (exerciseId: string, setId: string, isCompleted: boolean) => Promise<void>;
 }
 
-const makeDraft = (): NewExerciseDraft => ({
-  name: randomSuggestion(),
-  photoUri: null,
-});
+const ExerciseItem: React.FC<ExerciseItemProps> = ({
+  exercise,
+  isSelected,
+  isSessionActive,
+  onSelect,
+  onNavigate,
+  onDelete,
+  theme,
+  toggleSetCompletion,
+}) => {
+  const done = isExerciseDone(exercise);
+  const inProgress = isExerciseInProgress(exercise);
+  const completedCount = completedSetCount(exercise);
+  const totalSets = exercise.sets.length;
 
-// ── Screen ────────────────────────────────────────────────────────────────────
+  const accentColor = done ? '#534AB7' : inProgress ? theme.accent : theme.border;
+  const pillBg = done ? '#1E1A3A' : inProgress ? '#0A1F14' : theme.surface;
+  const pillLabel = done ? 'Done' : inProgress ? 'In Progress' : 'No Sets';
+  const pillColor = done ? '#AFA9EC' : inProgress ? '#9FE1CB' : theme.textMuted;
+
+  // Non-empty sets: have at least one value or are completed
+  const visibleSets = exercise.sets.filter(
+    s => s.weight !== null || s.repetitions !== null || s.isCompleted,
+  );
+
+  const s = exerciseItemStyles(theme, isSelected, accentColor);
+
+  return (
+    <View style={s.row}>
+      <Pressable
+        style={({ pressed }) => [s.item, pressed && !isSelected && s.itemPressed]}
+        onPress={onSelect}
+      >
+        {isSelected && <View style={s.accentBar} />}
+
+        {/* Thumbnail */}
+        <View style={s.thumb}>
+          {exercise.photoUrl ? (
+            <Image source={{ uri: exercise.photoUrl }} style={s.thumbImg} />
+          ) : (
+            <Text style={s.thumbIcon}>💪</Text>
+          )}
+        </View>
+
+        {/* Content */}
+        <View style={s.content}>
+          <View style={s.topRow}>
+            <Text style={s.label} numberOfLines={1}>
+              {exercise.autoLabel}
+            </Text>
+            <View style={[s.pill, { backgroundColor: pillBg }]}>
+              <Text style={[s.pillText, { color: pillColor }]}>{pillLabel}</Text>
+            </View>
+          </View>
+          <Text style={s.setCount}>
+            {totalSets === 0 ? 'No sets' : `${completedCount} / ${totalSets} sets done`}
+          </Text>
+
+          {/* Expanded: set completion toggles */}
+          {isSelected && visibleSets.length > 0 && (
+            <View style={s.setList}>
+              {visibleSets.map(set => (
+                <Pressable
+                  key={set.id}
+                  style={s.setRow}
+                  onPress={() => void toggleSetCompletion(exercise.id, set.id, set.isCompleted)}
+                  disabled={!isSessionActive}
+                >
+                  <Text style={s.setNum}>#{set.setNumber}</Text>
+                  <Text style={s.setWeight}>{set.weight !== null ? `${set.weight} kg` : '—'}</Text>
+                  <Text style={s.setReps}>
+                    {set.repetitions !== null ? `×${set.repetitions}` : '—'}
+                  </Text>
+                  <View style={[s.check, set.isCompleted && s.checkDone]}>
+                    {set.isCompleted && <Text style={s.checkMark}>✓</Text>}
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          )}
+        </View>
+      </Pressable>
+
+      {/* Navigate › */}
+      <Pressable
+        style={s.navBtn}
+        onPress={onNavigate}
+        hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+      >
+        <View style={s.navCircle}>
+          <Text style={s.navChevron}>›</Text>
+        </View>
+      </Pressable>
+
+      {/* Delete 🗑 — only for active sessions */}
+      {isSessionActive && (
+        <Pressable
+          style={s.deleteBtn}
+          onPress={onDelete}
+          hitSlop={{ top: 10, bottom: 10, left: 8, right: 12 }}
+        >
+          <Text style={s.deleteIcon}>🗑</Text>
+        </Pressable>
+      )}
+    </View>
+  );
+};
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+const exerciseItemStyles = (theme: AppTheme, isSelected: boolean, accentColor: string) =>
+  StyleSheet.create({
+    row: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+    item: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      backgroundColor: theme.surface,
+      borderWidth: isSelected ? 1.5 : 0.5,
+      borderColor: isSelected ? accentColor : theme.border,
+      borderRadius: 12,
+      padding: 12,
+      overflow: 'hidden',
+    },
+    itemPressed: { opacity: 0.8 },
+    accentBar: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: 3,
+      borderRadius: 12,
+      backgroundColor: accentColor,
+    },
+    thumb: {
+      width: 40,
+      height: 40,
+      borderRadius: 8,
+      backgroundColor: theme.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 10,
+      marginLeft: 6,
+      overflow: 'hidden',
+      flexShrink: 0,
+    },
+    thumbImg: { width: 40, height: 40 },
+    thumbIcon: { fontSize: 20 },
+    content: { flex: 1 },
+    topRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
+    label: { flex: 1, fontSize: 14, fontWeight: '600', color: theme.textPrimary },
+    pill: {
+      paddingHorizontal: 7,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    pillText: { fontSize: 9, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
+    setCount: { fontSize: 12, color: theme.textSecondary, marginBottom: 2 },
+    setList: { marginTop: 8, gap: 0 },
+    setRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 7,
+      borderTopWidth: 0.5,
+      borderTopColor: theme.border,
+      gap: 10,
+    },
+    setNum: { width: 28, fontSize: 11, color: theme.textMuted, fontVariant: ['tabular-nums'] },
+    setWeight: { width: 64, fontSize: 13, color: theme.textPrimary, fontVariant: ['tabular-nums'] },
+    setReps: { flex: 1, fontSize: 13, color: theme.textPrimary, fontVariant: ['tabular-nums'] },
+    check: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: theme.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    checkDone: { backgroundColor: theme.accent, borderColor: theme.accent },
+    checkMark: { fontSize: 13, color: '#0E0E0F', fontWeight: '700' },
+    navBtn: { marginLeft: 8 },
+    navCircle: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: isSelected ? 'rgba(198,241,53,0.15)' : theme.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    navChevron: {
+      fontSize: 22,
+      color: isSelected ? theme.accent : theme.textSecondary,
+      lineHeight: 26,
+    },
+    deleteBtn: { marginLeft: 10 },
+    deleteIcon: { fontSize: 16 },
+  });
+
+// ── Main screen ───────────────────────────────────────────────────────────────
 
 export const ActiveSessionScreen: React.FC<ActiveSessionScreenProps> = ({ route, navigation }) => {
   const { sessionId } = route.params;
@@ -66,89 +271,85 @@ export const ActiveSessionScreen: React.FC<ActiveSessionScreenProps> = ({ route,
     error,
     restoreSession,
     addExercise,
-    startExercise,
-    finishExercise,
     deleteExercise,
     finishSession,
     renameSession,
+    toggleSetCompletion,
   } = useSession();
 
   const [selectedId, setSelectedId] = useState<string | 'new' | null>(null);
-  const [draft, setDraft] = useState<NewExerciseDraft | null>(null);
+  const [showDraft, setShowDraft] = useState(false);
+  const [draftName, setDraftName] = useState('');
+  const [draftPhotoUri, setDraftPhotoUri] = useState<string | null>(null);
+  const [isActing, setIsActing] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+
   const nameInputRef = useRef<TextInput>(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
   const titleInputRef = useRef<TextInput>(null);
-  const [, setTick] = useState(0);
 
-  // ── Load session ──────────────────────────────────────────────────────────
+  const isSessionActive = currentSession?.status === 'Active';
+
+  // ── Load session ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (currentSession?.id !== sessionId) {
       void restoreSession(sessionId);
     }
   }, [sessionId, currentSession?.id, restoreSession]);
 
-  // ── Timer tick — fix: primitive dep, not object ───────────────────────────
-  const runningExercise = currentSession?.exercises.find(e => isRunning(e.status));
-
+  // ── Auto-select first exercise ────────────────────────────────────────────
   useEffect(() => {
-    if (!runningExercise) return;
-    const interval = setInterval(() => setTick(t => t + 1), 1000);
-    return (): void => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [runningExercise?.id]); // intentionally only id, because it is enough
-
-  // ── Auto-select running exercise ──────────────────────────────────────────
-  useEffect(() => {
-    if (runningExercise && selectedId === null) {
-      setSelectedId(runningExercise.id);
+    if (currentSession && !selectedId && currentSession.exercises.length > 0) {
+      setSelectedId(currentSession.exercises[0].id);
     }
-  }, [runningExercise, selectedId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSession?.id]);
 
-  // ── Sorted exercise list ──────────────────────────────────────────────────
+  // ── Sorted exercises: done last ───────────────────────────────────────────
   const sortedExercises = currentSession
     ? [...currentSession.exercises].sort((a, b) => {
-        const order = { Running: 0, Pending: 1, Finished: 2 };
-        return order[a.status] - order[b.status];
+        const aScore = isExerciseDone(a) ? 1 : 0;
+        const bScore = isExerciseDone(b) ? 1 : 0;
+        return aScore - bScore;
       })
     : [];
 
-  // ── Item tap ──────────────────────────────────────────────────────────────
+  // ── Item tap — confirm drop draft if exists ───────────────────────────────
   const handleItemTap = useCallback(
     (exerciseId: string): void => {
       if (selectedId === exerciseId) return;
 
-      if (draft !== null && selectedId === 'new') {
-        Alert.alert(
-          'Drop new exercise?',
-          'You have an unsaved exercise. Drop it and select the tapped one?',
-          [
-            { text: 'Keep editing', style: 'cancel' },
-            {
-              text: 'Drop it',
-              style: 'destructive',
-              onPress: (): void => {
-                setDraft(null);
-                setSelectedId(exerciseId);
-              },
+      if (showDraft && selectedId === 'new') {
+        Alert.alert('Drop new exercise?', 'You have an unsaved exercise. Drop it?', [
+          { text: 'Keep editing', style: 'cancel' },
+          {
+            text: 'Drop it',
+            style: 'destructive',
+            onPress: (): void => {
+              setShowDraft(false);
+              setDraftName('');
+              setDraftPhotoUri(null);
+              setSelectedId(exerciseId);
             },
-          ],
-        );
+          },
+        ]);
         return;
       }
-
       setSelectedId(exerciseId);
     },
-    [selectedId, draft],
+    [selectedId, showDraft],
   );
 
-  // ── Add new ───────────────────────────────────────────────────────────────
+  // ── Add new exercise draft ────────────────────────────────────────────────
   const handleAddNew = useCallback((): void => {
-    if (draft !== null || runningExercise) return;
-    setDraft(makeDraft());
+    if (showDraft) return;
+    setDraftName(randomSuggestion());
+    setDraftPhotoUri(null);
+    setShowDraft(true);
     setSelectedId('new');
-    setTimeout(() => nameInputRef.current?.focus(), 50);
-  }, [draft, runningExercise]);
+    setTimeout(() => nameInputRef.current?.focus(), 60);
+  }, [showDraft]);
 
   // ── Photo picker ──────────────────────────────────────────────────────────
   const handlePickPhoto = useCallback(async (): Promise<void> => {
@@ -160,81 +361,89 @@ export const ActiveSessionScreen: React.FC<ActiveSessionScreenProps> = ({ route,
       quality: 0.8,
     });
     if (!result.canceled && result.assets[0]) {
-      setDraft(d => (d ? { ...d, photoUri: result.assets[0].uri } : d));
+      setDraftPhotoUri(result.assets[0].uri);
     }
   }, []);
 
-  // ── Start exercise ────────────────────────────────────────────────────────
-  const handleStart = useCallback(async (): Promise<void> => {
-    if (!currentSession) return;
-
-    if (selectedId === 'new' && draft) {
-      const name = stripSuggestionMark(draft.name);
-      if (!name) return;
-      try {
-        await addExercise({ autoLabel: name, photoUrl: draft.photoUri ?? undefined });
-        setDraft(null);
-        setSelectedId(null);
-      } catch {
-        /* error in context */
-      }
-      return;
-    }
-
-    if (selectedId && selectedId !== 'new') {
-      try {
-        await startExercise(selectedId);
-      } catch {
-        /* error in context */
-      }
-    }
-  }, [selectedId, draft, currentSession, addExercise, startExercise]);
-
-  // ── Finish exercise ───────────────────────────────────────────────────────
-  const handleFinishExercise = useCallback(async (): Promise<void> => {
-    if (!runningExercise) return;
+  // ── Submit new exercise ───────────────────────────────────────────────────
+  const handleSubmitExercise = useCallback(async (): Promise<void> => {
+    const name = stripSuggestionMark(draftName);
+    if (!name) return;
+    setIsActing(true);
+    setActionError(null);
     try {
-      await finishExercise(runningExercise.id);
-      setSelectedId(null);
-    } catch {
-      /* error in context */
+      const exercise = await addExercise({ autoLabel: name, photoUrl: draftPhotoUri ?? undefined });
+      setShowDraft(false);
+      setDraftName('');
+      setDraftPhotoUri(null);
+      setSelectedId(exercise.id);
+    } catch (e) {
+      setActionError((e as Error).message);
+    } finally {
+      setIsActing(false);
     }
-  }, [runningExercise, finishExercise]);
+  }, [draftName, draftPhotoUri, addExercise]);
 
   // ── Delete exercise ───────────────────────────────────────────────────────
   const handleDelete = useCallback(
-    async (exerciseId: string): Promise<void> => {
+    (exerciseId: string): void => {
       Alert.alert('Remove exercise?', 'This exercise will be removed from the session.', [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Remove',
           style: 'destructive',
           onPress: async (): Promise<void> => {
+            setIsActing(true);
             try {
               await deleteExercise(exerciseId);
-              setSelectedId(null);
-            } catch {
-              /* error in context */
+              if (selectedId === exerciseId) setSelectedId(null);
+            } catch (e) {
+              setActionError((e as Error).message);
+            } finally {
+              setIsActing(false);
             }
           },
         },
       ]);
     },
-    [deleteExercise],
+    [deleteExercise, selectedId],
   );
 
   // ── Finish session ────────────────────────────────────────────────────────
   const handleFinishSession = useCallback(async (): Promise<void> => {
-    try {
-      const session = await finishSession();
-      navigation.replace('SessionFinished', { sessionId: session.id });
-    } catch {
-      /* error in context */
-    }
+    Alert.alert('Finish session?', 'Mark this session as complete?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Finish',
+        onPress: async (): Promise<void> => {
+          setIsActing(true);
+          try {
+            const session = await finishSession();
+            navigation.replace('SessionFinished', { sessionId: session.id });
+          } catch (e) {
+            setActionError((e as Error).message);
+            setIsActing(false);
+          }
+        },
+      },
+    ]);
   }, [finishSession, navigation]);
+
+  // ── Toggle set completion (passed to ExerciseItem) ────────────────────────
+  const handleToggleSet = useCallback(
+    async (exerciseId: string, setId: string, isCompleted: boolean): Promise<void> => {
+      try {
+        await toggleSetCompletion(exerciseId, setId, isCompleted);
+      } catch {
+        // silent — optimistic update will revert via context
+      }
+    },
+    [toggleSetCompletion],
+  );
 
   // ── Title rename ──────────────────────────────────────────────────────────
   const startEditingTitle = (): void => {
+    if (!isSessionActive) return;
     setTitleDraft(currentSession?.label ?? '');
     setEditingTitle(true);
     setTimeout(() => titleInputRef.current?.focus(), 50);
@@ -247,7 +456,7 @@ export const ActiveSessionScreen: React.FC<ActiveSessionScreenProps> = ({ route,
     try {
       await renameSession(sessionId, trimmed);
     } catch {
-      /* error in context */
+      // silent
     }
   };
 
@@ -268,25 +477,11 @@ export const ActiveSessionScreen: React.FC<ActiveSessionScreenProps> = ({ route,
     );
   }
 
-  // ── Derived state ─────────────────────────────────────────────────────────
-  const sessionLabel = currentSession.label ?? 'Session';
-
-  const selectedExercise =
-    selectedId && selectedId !== 'new'
-      ? currentSession.exercises.find(e => e.id === selectedId)
-      : null;
-
-  const isSelectedRunning = selectedExercise ? isRunning(selectedExercise.status) : false;
-  const isSelectedPending = selectedExercise ? isPending(selectedExercise.status) : false;
-  const isSelectedDone = selectedExercise ? isFinished(selectedExercise.status) : false;
-  const isSelectedNew = selectedId === 'new';
-
-  const canAddNew = !draft && !runningExercise;
-  const canStart = isSelectedNew
-    ? !!(draft && stripSuggestionMark(draft.name))
-    : isSelectedPending && !runningExercise;
-  const canFinish = isSelectedRunning;
-  const canDelete = (isSelectedPending || isSelectedDone) && !isSelectedRunning;
+  const session = currentSession as Session;
+  const sessionLabel = session.label ?? 'Session';
+  const canSubmit = !isSuggestion(draftName)
+    ? draftName.trim().length > 0
+    : stripSuggestionMark(draftName).length > 0;
 
   return (
     <KeyboardAvoidingView style={s.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -303,8 +498,8 @@ export const ActiveSessionScreen: React.FC<ActiveSessionScreenProps> = ({ route,
             style={s.titleInput}
             value={titleDraft}
             onChangeText={setTitleDraft}
-            onSubmitEditing={commitTitleRename}
-            onBlur={commitTitleRename}
+            onSubmitEditing={() => void commitTitleRename()}
+            onBlur={() => void commitTitleRename()}
             returnKeyType="done"
             selectTextOnFocus
             maxLength={60}
@@ -314,13 +509,13 @@ export const ActiveSessionScreen: React.FC<ActiveSessionScreenProps> = ({ route,
             <Text style={s.titleText} numberOfLines={1}>
               {sessionLabel}
             </Text>
-            <Text style={s.titleEdit}>✎</Text>
+            {isSessionActive && <Text style={s.titleEdit}>✎</Text>}
           </Pressable>
         )}
 
         {editingTitle ? (
-          <Pressable style={s.cancelTitle} hitSlop={12} onPress={() => setEditingTitle(false)}>
-            <Text style={s.cancelTitleLabel}>✕</Text>
+          <Pressable style={s.headerRight} hitSlop={12} onPress={() => setEditingTitle(false)}>
+            <Text style={s.cancelLabel}>✕</Text>
           </Pressable>
         ) : (
           <View style={s.headerRight} />
@@ -332,191 +527,107 @@ export const ActiveSessionScreen: React.FC<ActiveSessionScreenProps> = ({ route,
         style={s.list}
         contentContainerStyle={s.listContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        {/* New draft row — always on top */}
-        {draft && (
-          <Pressable style={[s.exItem, s.exNew]} onPress={() => setSelectedId('new')}>
-            {/* Accent bar */}
-            <View style={[s.accentBar, { backgroundColor: '#534AB7' }]} />
-            <View style={s.exLeft}>
-              <View style={[s.pill, s.pillNew]}>
-                <Text style={s.pillNewLabel}>New</Text>
+        {(error || actionError) && <Text style={s.errorText}>{actionError ?? error}</Text>}
+
+        {/* Draft row — always on top */}
+        {showDraft && (
+          <View style={s.draftRow}>
+            <View style={s.draftCard}>
+              <View style={s.draftAccentBar} />
+              <View style={s.thumb}>
+                <Text style={s.thumbIcon}>💪</Text>
               </View>
-              <Text
-                style={[s.exName, isSuggestionName(draft.name) ? s.exNameSuggestion : s.exNameLime]}
-              >
-                {draft.name}
-              </Text>
-            </View>
-          </Pressable>
-        )}
-
-        {sortedExercises.map(exercise => {
-          const running = isRunning(exercise.status);
-          const pending = isPending(exercise.status);
-          const done = isFinished(exercise.status);
-          const selected = selectedId === exercise.id;
-
-          return (
-            <Pressable
-              key={exercise.id}
-              style={[
-                s.exItem,
-                running && s.exRunning,
-                pending && !selected && s.exPending,
-                pending && selected && s.exPendingSel,
-                done && s.exDone,
-              ]}
-              onPress={() => handleItemTap(exercise.id)}
-            >
-              {/* Accent bar — shown when selected */}
-              {selected && (
-                <View
-                  style={[s.accentBar, { backgroundColor: running ? theme.accent : '#534AB7' }]}
+              <View style={s.draftContent}>
+                <TextInput
+                  ref={nameInputRef}
+                  style={[
+                    s.draftInput,
+                    isSuggestion(draftName) ? s.draftInputSuggestion : s.draftInputActive,
+                  ]}
+                  value={draftName}
+                  onChangeText={setDraftName}
+                  returnKeyType="done"
+                  onSubmitEditing={() => void handleSubmitExercise()}
+                  maxLength={80}
+                  selectTextOnFocus
                 />
-              )}
-
-              <View style={s.exLeft}>
-                <View style={[s.pill, running ? s.pillRun : done ? s.pillDone : s.pillPend]}>
-                  {running && <View style={s.pillDot} />}
-                  <Text style={running ? s.pillRunLabel : done ? s.pillDoneLabel : s.pillPendLabel}>
-                    {running ? 'Running' : done ? 'Done' : 'Pending'}
-                  </Text>
-                </View>
-                <Text style={[s.exName, done && s.exNameMuted]}>{exercise.autoLabel}</Text>
-                {running && (
-                  <Text style={s.exTimer}>{formatElapsed(elapsedSeconds(exercise))}</Text>
-                )}
-                {done && exercise.startedAt && exercise.realEndAt && (
-                  <Text style={s.exDuration}>
-                    {formatElapsed(
-                      Math.floor(
-                        (exercise.realEndAt.getTime() - exercise.startedAt.getTime()) / 1000,
-                      ),
+                <View style={s.draftActions}>
+                  <Pressable style={s.photoBtn} onPress={() => void handlePickPhoto()}>
+                    <Text>{draftPhotoUri ? '🖼️' : '📷'}</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[s.submitBtn, !canSubmit && s.submitBtnDisabled]}
+                    onPress={() => void handleSubmitExercise()}
+                    disabled={!canSubmit || isActing}
+                  >
+                    {isActing ? (
+                      <ActivityIndicator color="#0E0E0F" size="small" />
+                    ) : (
+                      <Text style={s.submitBtnLabel}>Add Exercise</Text>
                     )}
-                  </Text>
-                )}
+                  </Pressable>
+                </View>
               </View>
+            </View>
+            <Pressable
+              onPress={() => {
+                setShowDraft(false);
+                setDraftName('');
+                setSelectedId(null);
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 8, right: 12 }}
+            >
+              <Text style={s.deleteIcon}>🗑</Text>
             </Pressable>
-          );
-        })}
-
-        {sortedExercises.length === 0 && !draft && (
-          <Text style={s.emptyList}>{'Tap "+ Add New" to add your first exercise.'}</Text>
+          </View>
         )}
+
+        {sortedExercises.length === 0 && !showDraft && (
+          <Text style={s.emptyList}>{'Tap "+ Add Exercise" to start your first exercise.'}</Text>
+        )}
+
+        {sortedExercises.map(exercise => (
+          <ExerciseItem
+            key={exercise.id}
+            exercise={exercise}
+            isSelected={selectedId === exercise.id}
+            isSessionActive={!!isSessionActive}
+            onSelect={() => handleItemTap(exercise.id)}
+            onNavigate={() => {
+              setSelectedId(exercise.id);
+              navigation.navigate('Exercise', { sessionId, exerciseId: exercise.id });
+            }}
+            onDelete={() => handleDelete(exercise.id)}
+            theme={theme}
+            toggleSetCompletion={handleToggleSet}
+          />
+        ))}
       </ScrollView>
 
       {/* ── Area 3: Action area ── */}
-      <View style={s.actionArea}>
-        <Text style={s.actionAreaLabel}>Actions</Text>
-
-        {error ? <Text style={s.errorText}>{error}</Text> : null}
-
-        {/* Input row — shown when New is selected */}
-        {isSelectedNew && draft && (
-          <>
-            <View style={s.inputRow}>
-              <TextInput
-                ref={nameInputRef}
-                style={[
-                  s.nameInput,
-                  isSuggestionName(draft.name) ? s.nameInputSuggestion : s.nameInputLime,
-                ]}
-                value={draft.name}
-                onChangeText={name => setDraft(d => (d ? { ...d, name } : d))}
-                returnKeyType="done"
-                maxLength={80}
-                selectTextOnFocus
-              />
-              <Pressable
-                style={[s.photoBtn, draft.photoUri && s.photoBtnFilled]}
-                onPress={handlePickPhoto}
-              >
-                <Text>{draft.photoUri ? '🖼️' : '📷'}</Text>
-              </Pressable>
-            </View>
-          </>
-        )}
-
-        {/* Primary action row */}
-        <View style={s.btnRow}>
-          {canFinish && (
-            <Pressable
-              style={({ pressed }) => [s.btnWarning, pressed && s.pressed]}
-              onPress={handleFinishExercise}
-              disabled={isLoading}
-            >
-              <Text style={s.btnWarningLabel}>⏹ Finish Exercise</Text>
-            </Pressable>
-          )}
-
-          {(isSelectedNew || isSelectedPending) && (
-            <Pressable
-              style={({ pressed }) => [
-                s.btnPrimary,
-                !canStart && s.btnDisabled,
-                pressed && s.pressed,
-              ]}
-              onPress={handleStart}
-              disabled={!canStart || isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#0E0E0F" />
-              ) : (
-                <Text style={[s.btnPrimaryLabel, !canStart && s.btnDisabledLabel]}>
-                  ▶ Start Exercise
-                </Text>
-              )}
-            </Pressable>
-          )}
-
-          {/* Trash — Pending or Done only */}
-          {canDelete && selectedExercise && (
-            <Pressable
-              style={({ pressed }) => [s.btnTrash, pressed && s.pressed]}
-              onPress={() => handleDelete(selectedExercise.id)}
-            >
-              <Text style={s.btnTrashIcon}>🗑</Text>
-            </Pressable>
-          )}
-
-          {/* Add New */}
-          {!isSelectedNew && !canFinish && (
-            <Pressable
-              style={({ pressed }) => [
-                s.btnSecondary,
-                !canAddNew && s.btnDisabled,
-                pressed && s.pressed,
-              ]}
-              onPress={handleAddNew}
-              disabled={!canAddNew}
-            >
-              <Text style={[s.btnSecondaryLabel, !canAddNew && s.btnDisabledLabel]}>
-                + Add New Exercise
-              </Text>
-            </Pressable>
-          )}
+      {isSessionActive && (
+        <View style={s.actionArea}>
+          <Text style={s.actionLabel}>ACTIONS</Text>
+          <Pressable
+            style={[s.btnPrimary, showDraft && s.btnDisabled]}
+            onPress={handleAddNew}
+            disabled={showDraft}
+          >
+            <Text style={s.btnPrimaryLabel}>+ Add Exercise</Text>
+          </Pressable>
+          <Pressable
+            style={s.btnFinishSession}
+            onPress={() => void handleFinishSession()}
+            disabled={isActing}
+          >
+            <Text style={s.btnFinishSessionLabel}>⏹ Finish Session</Text>
+          </Pressable>
         </View>
-
-        {/* Finish session */}
-        <Pressable
-          style={({ pressed }) => [s.btnFinishSession, pressed && s.pressed]}
-          onPress={handleFinishSession}
-          disabled={isLoading}
-        >
-          <Text style={s.btnFinishSessionLabel}>⏹ Finish Session</Text>
-        </Pressable>
-      </View>
+      )}
     </KeyboardAvoidingView>
   );
-};
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-const formatElapsed = (totalSeconds: number): string => {
-  const m = Math.floor(totalSeconds / 60);
-  const s = totalSeconds % 60;
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 };
 
 // ── Styles ────────────────────────────────────────────────────────────────────
@@ -538,11 +649,11 @@ const styles = (theme: AppTheme): ReturnType<typeof StyleSheet.create> =>
       alignItems: 'center',
       paddingTop: 52,
       paddingBottom: 12,
-      paddingHorizontal: 16, // ← was 16, consistent ✅
+      paddingHorizontal: 16,
       borderBottomWidth: 0.5,
       borderBottomColor: theme.border,
     },
-    backBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, width: 52 },
+    backBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, width: 70 },
     backArrow: { fontSize: 22, color: theme.accent, lineHeight: 26 },
     backLabel: { fontSize: 13, color: theme.accent },
     titleBtn: {
@@ -571,113 +682,90 @@ const styles = (theme: AppTheme): ReturnType<typeof StyleSheet.create> =>
       paddingVertical: 2,
       paddingHorizontal: 8,
     },
-    cancelTitle: { width: 52, alignItems: 'flex-end' },
-    cancelTitleLabel: { fontSize: 15, color: theme.textMuted },
-    headerRight: { width: 52 },
+    headerRight: { width: 70, alignItems: 'flex-end' },
+    cancelLabel: { fontSize: 15, color: theme.textMuted },
 
     // List
     list: { flex: 1, minHeight: 80 },
-    listContent: {
-      paddingHorizontal: 16, // ← was 14, now matches SessionHub ✅
-      paddingTop: 10,
-      paddingBottom: 8,
-      gap: 5,
-    },
+    listContent: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8 },
     emptyList: { fontSize: 13, color: theme.textMuted, textAlign: 'center', marginTop: 32 },
 
-    // Exercise items
-    exItem: {
-      borderRadius: 12, // ← was 11, now matches SessionHub ✅
-      padding: 11,
+    // Draft row
+    draftRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8, gap: 10 },
+    draftCard: {
+      flex: 1,
       flexDirection: 'row',
-      alignItems: 'center',
-      borderWidth: 0.5,
-      overflow: 'hidden', // ← needed for accent bar + borderRadius
+      alignItems: 'flex-start',
+      backgroundColor: theme.surface,
+      borderWidth: 1.5,
+      borderColor: '#534AB7',
+      borderStyle: 'dashed',
+      borderRadius: 12,
+      padding: 12,
+      overflow: 'hidden',
     },
-    exRunning: { backgroundColor: '#0A1F14', borderColor: theme.accent },
-    exPending: { backgroundColor: theme.surface, borderColor: theme.border },
-    exPendingSel: { backgroundColor: theme.surface, borderColor: '#534AB7' }, // ← no dark tint, accent bar handles it
-    exDone: { backgroundColor: theme.surface, borderColor: theme.surface, opacity: 0.5 },
-    exNew: { backgroundColor: theme.surface, borderColor: '#534AB7', borderStyle: 'dashed' },
-    exLeft: { flex: 1, gap: 2 },
-    exName: { fontSize: 14, fontWeight: '500', color: theme.textPrimary },
-    exNameMuted: { color: theme.textMuted, fontWeight: '400' },
-    exNameSuggestion: { color: '#AFA9EC', fontStyle: 'italic' },
-    exNameLime: { color: theme.accent },
-    exTimer: {
-      fontSize: 28,
-      fontWeight: '200',
-      color: theme.accent,
-      letterSpacing: 2,
-      fontVariant: ['tabular-nums'],
-    },
-    exDuration: { fontSize: 11, color: theme.textMuted, fontVariant: ['tabular-nums'] },
-
-    // Accent bar — left strip, mirrors SessionHub HubSessionItem
-    accentBar: {
+    draftAccentBar: {
       position: 'absolute',
       left: 0,
       top: 0,
       bottom: 0,
       width: 3,
       borderRadius: 12,
+      backgroundColor: '#534AB7',
     },
-
-    // Pills
-    pill: {
-      flexDirection: 'row',
+    thumb: {
+      width: 40,
+      height: 40,
+      borderRadius: 8,
+      backgroundColor: theme.border,
       alignItems: 'center',
-      gap: 3,
-      alignSelf: 'flex-start',
-      borderRadius: 3,
-      paddingHorizontal: 6,
-      paddingVertical: 2,
-      marginBottom: 3,
+      justifyContent: 'center',
+      marginRight: 10,
+      marginLeft: 6,
+      flexShrink: 0,
     },
-    pillRun: { backgroundColor: '#0F6E56' },
-    pillDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#5DCAA5' },
-    pillRunLabel: {
-      fontSize: 8,
-      fontWeight: '600',
-      color: '#9FE1CB',
-      letterSpacing: 0.5,
-      textTransform: 'uppercase',
+    thumbIcon: { fontSize: 20 },
+    draftContent: { flex: 1, gap: 8 },
+    draftInput: {
+      fontSize: 15,
+      paddingVertical: 4,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
     },
-    pillPend: { backgroundColor: theme.border },
-    pillPendLabel: {
-      fontSize: 8,
-      fontWeight: '500',
-      color: theme.textSecondary,
-      textTransform: 'uppercase',
-      letterSpacing: 0.4,
+    draftInputSuggestion: { color: '#AFA9EC', fontStyle: 'italic', borderBottomColor: '#534AB7' },
+    draftInputActive: { color: theme.accent, borderBottomColor: theme.accent },
+    draftActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+    photoBtn: {
+      width: 36,
+      height: 36,
+      backgroundColor: theme.surface,
+      borderWidth: 0.5,
+      borderColor: theme.border,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
-    pillDone: { backgroundColor: theme.surface },
-    pillDoneLabel: {
-      fontSize: 8,
-      color: theme.textMuted,
-      textTransform: 'uppercase',
-      letterSpacing: 0.4,
+    submitBtn: {
+      flex: 1,
+      backgroundColor: theme.accent,
+      borderRadius: 10,
+      paddingVertical: 9,
+      alignItems: 'center',
     },
-    pillNew: { backgroundColor: '#2A2A40' },
-    pillNewLabel: {
-      fontSize: 8,
-      fontWeight: '600',
-      color: '#AFA9EC',
-      textTransform: 'uppercase',
-      letterSpacing: 0.4,
-    },
+    submitBtnDisabled: { opacity: 0.4 },
+    submitBtnLabel: { fontSize: 14, fontWeight: '700', color: '#0E0E0F' },
+    deleteIcon: { fontSize: 16, marginTop: 14 },
 
     // Action area
     actionArea: {
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      paddingBottom: 32,
       borderTopWidth: 0.5,
       borderTopColor: theme.border,
-      paddingHorizontal: 20, // ← was 14, now matches HubActionArea ✅
-      paddingTop: 12,
-      paddingBottom: 28,
       gap: 8,
     },
-    actionAreaLabel: {
-      // ← new, matches SessionHub area labels ✅
+    actionLabel: {
       fontSize: 10,
       fontWeight: '600',
       letterSpacing: 1.2,
@@ -685,86 +773,21 @@ const styles = (theme: AppTheme): ReturnType<typeof StyleSheet.create> =>
       color: theme.textMuted,
       marginBottom: 2,
     },
-
-    // Input row
-    inputRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    nameInput: {
-      flex: 1,
-      backgroundColor: theme.surface,
-      borderWidth: 0.5,
-      borderRadius: 9,
-      paddingHorizontal: 12,
-      paddingVertical: 9,
-      fontSize: 14,
-      color: theme.textPrimary,
-      borderColor: '#534AB7',
-    },
-    nameInputSuggestion: { color: '#AFA9EC', borderColor: '#534AB7' },
-    nameInputLime: { color: theme.accent, borderColor: theme.accent },
-    photoBtn: {
-      width: 38,
-      height: 38,
-      backgroundColor: theme.surface,
-      borderWidth: 0.5,
-      borderColor: theme.border,
-      borderRadius: 9,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    photoBtnFilled: { borderColor: '#534AB7', backgroundColor: '#141420' },
-
-    // Buttons
-    btnRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
     btnPrimary: {
-      flex: 1,
       backgroundColor: theme.accent,
-      borderRadius: 14, // ← was 10, now matches HubActionArea ✅
-      paddingVertical: 13,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    btnPrimaryLabel: { fontSize: 14, fontWeight: '700', color: '#0E0E0F' },
-    btnWarning: {
-      flex: 1,
-      backgroundColor: theme.surface,
-      borderWidth: 1,
-      borderColor: '#BA7517',
-      borderRadius: 14, // ← was 10 ✅
+      borderRadius: 14,
       paddingVertical: 13,
       alignItems: 'center',
     },
-    btnWarningLabel: { fontSize: 13, fontWeight: '600', color: '#FAC775' },
-    btnSecondary: {
-      flex: 1,
-      backgroundColor: theme.surface,
-      borderWidth: 0.5,
-      borderColor: theme.border,
-      borderRadius: 14, // ← was 10 ✅
-      paddingVertical: 13,
-      alignItems: 'center',
-    },
-    btnSecondaryLabel: { fontSize: 14, fontWeight: '500', color: theme.textPrimary },
-    btnTrash: {
-      width: 46,
-      height: 46,
-      backgroundColor: theme.surface,
-      borderWidth: 0.5,
-      borderColor: theme.danger,
-      borderRadius: 14, // ← was 10 ✅
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    btnTrashIcon: { fontSize: 16 },
-    btnDisabled: { backgroundColor: theme.surface, borderColor: theme.border },
-    btnDisabledLabel: { color: theme.textMuted },
+    btnDisabled: { opacity: 0.4 },
+    btnPrimaryLabel: { fontSize: 15, fontWeight: '700', color: '#0E0E0F' },
     btnFinishSession: {
       backgroundColor: theme.surface,
       borderWidth: 0.5,
       borderColor: theme.border,
-      borderRadius: 14, // ← was 10 ✅
+      borderRadius: 14,
       paddingVertical: 10,
       alignItems: 'center',
     },
     btnFinishSessionLabel: { fontSize: 12, color: theme.textMuted },
-    pressed: { opacity: 0.8, transform: [{ scale: 0.98 }] },
   });

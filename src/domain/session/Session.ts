@@ -1,5 +1,4 @@
-import { Exercise } from './Exercise';
-import { isFinished, isPending, isRunning } from './ExerciseStatus';
+import { Exercise, isExerciseDone } from './Exercise';
 
 export type SessionStatus = 'Active' | 'Finished';
 
@@ -15,20 +14,15 @@ export interface Session {
   readonly exercises: readonly Exercise[];
 }
 
-// Derived queries — keep business logic in domain, not in components
+// Derived queries
 
 export const isActive = (session: Session): boolean => session.status === 'Active';
-
-export const runningExercise = (session: Session): Exercise | undefined =>
-  session.exercises.find(e => isRunning(e.status));
-
-export const pendingExercises = (session: Session): Exercise[] =>
-  session.exercises.filter(e => isPending(e.status));
-
-export const finishedExercises = (session: Session): Exercise[] =>
-  session.exercises.filter(e => isFinished(e.status));
 
 export const durationSeconds = (session: Session): number => {
   const end = session.finishedAt ?? new Date();
   return Math.floor((end.getTime() - session.createdAt.getTime()) / 1000);
 };
+
+// Returns exercises that have at least one completed set — used by SessionFinishedScreen
+export const finishedExercises = (session: Session): Exercise[] =>
+  session.exercises.filter(e => isExerciseDone(e));

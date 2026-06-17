@@ -66,7 +66,7 @@ export class DeleteSetUseCase {
 
 // ── ToggleSetCompletionUseCase ────────────────────────────────────────────────
 // Wraps complete + uncomplete — screen passes current isCompleted,
-// use case picks the right endpoint. Single responsibility, simple interface.
+// use case picks the right endpoint.
 
 export class ToggleSetCompletionUseCase {
   constructor(private readonly sessionRepo: ISessionRepository) {}

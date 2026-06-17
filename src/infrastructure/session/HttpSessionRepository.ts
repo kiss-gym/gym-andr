@@ -28,7 +28,7 @@ const mapExercise = (raw: Record<string, unknown>): Exercise => ({
   photoUrl: (raw['photoUrl'] as string | null) ?? null,
   startedAt: raw['startedAt'] ? new Date(raw['startedAt'] as string) : undefined,
   realEndAt: raw['realEndAt'] ? new Date(raw['realEndAt'] as string) : undefined,
-  status: raw['status'] as Exercise['status'],
+  // status field from server is intentionally ignored — derived client-side from sets
   properties: (raw['properties'] as { name: string; value: string }[]) ?? [],
   sets: ((raw['sets'] as Record<string, unknown>[]) ?? []).map(mapSet),
 });
@@ -162,22 +162,6 @@ export class HttpSessionRepository implements ISessionRepository {
     return mapExercise(raw);
   }
 
-  async startExercise(sessionId: string, exerciseId: string): Promise<Exercise> {
-    const raw = await apiRequest<Record<string, unknown>>(
-      `/api/sessions/${sessionId}/exercises/${exerciseId}/start`,
-      { method: 'POST', body: JSON.stringify({}) },
-    );
-    return mapExercise(raw);
-  }
-
-  async finishExercise(sessionId: string, exerciseId: string): Promise<Exercise> {
-    const raw = await apiRequest<Record<string, unknown>>(
-      `/api/sessions/${sessionId}/exercises/${exerciseId}/finish`,
-      { method: 'POST' },
-    );
-    return mapExercise(raw);
-  }
-
   async deleteExercise(sessionId: string, exerciseId: string): Promise<void> {
     await apiRequest<void>(`/api/sessions/${sessionId}/exercises/${exerciseId}`, {
       method: 'DELETE',
@@ -189,10 +173,7 @@ export class HttpSessionRepository implements ISessionRepository {
   async addSet(sessionId: string, exerciseId: string, input: AddSetInput): Promise<ExerciseSet> {
     const raw = await apiRequest<Record<string, unknown>>(
       `/api/sessions/${sessionId}/exercises/${exerciseId}/sets`,
-      {
-        method: 'POST',
-        body: JSON.stringify(input),
-      },
+      { method: 'POST', body: JSON.stringify(input) },
     );
     return mapSet(raw);
   }
@@ -213,10 +194,7 @@ export class HttpSessionRepository implements ISessionRepository {
   ): Promise<ExerciseSet> {
     const raw = await apiRequest<Record<string, unknown>>(
       `/api/sessions/${sessionId}/exercises/${exerciseId}/sets/${setId}`,
-      {
-        method: 'PATCH',
-        body: JSON.stringify(input),
-      },
+      { method: 'PATCH', body: JSON.stringify(input) },
     );
     return mapSet(raw);
   }

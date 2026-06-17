@@ -13,8 +13,6 @@ import {
   DeleteSetUseCase,
   ToggleSetCompletionUseCase,
 } from '@application/session/SetUseCases';
-import { StartExerciseUseCase } from '@application/session/StartExerciseUseCase';
-import { FinishExerciseUseCase } from '@application/session/FinishExerciseUseCase';
 import { DeleteExerciseUseCase } from '@application/session/DeleteExerciseUseCase';
 import { FinishSessionUseCase } from '@application/session/FinishSessionUseCase';
 import { GetActiveSessionUseCase } from '@application/session/GetActiveSessionUseCase';
@@ -39,8 +37,6 @@ export const serviceLocator = {
   // Exercise
   addExercise: new AddExerciseUseCase(sessionRepo),
   updateExercise: new UpdateExerciseUseCase(sessionRepo),
-  startExercise: new StartExerciseUseCase(sessionRepo),
-  finishExercise: new FinishExerciseUseCase(sessionRepo),
   deleteExercise: new DeleteExerciseUseCase(sessionRepo),
 
   // Sets

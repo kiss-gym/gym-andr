@@ -21,13 +21,9 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
   // ── Navigation ──────────────────────────────────────────────────────────────
 
   const handleNavigate = useCallback(
-    (sessionId: string, active: boolean): void => {
+    (sessionId: string): void => {
       selectSession(sessionId);
-      if (active) {
-        navigation.navigate('ActiveSession', { sessionId });
-      } else {
-        navigation.navigate('SessionDetail', { sessionId });
-      }
+      navigation.navigate('ActiveSession', { sessionId });
     },
     [navigation, selectSession],
   );
@@ -186,7 +182,7 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
             session={session}
             isSelected={selectedSession?.id === session.id}
             onSelect={() => selectSession(session.id)}
-            onNavigate={() => handleNavigate(session.id, isActive(session))}
+            onNavigate={() => handleNavigate(session.id)}
             onDelete={() => handleDelete(session.id, isActive(session))}
           />
         ))}

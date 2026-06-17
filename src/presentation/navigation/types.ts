@@ -5,18 +5,16 @@ export type RootStackParamList = {
   Register: undefined;
   SessionHub: undefined;
   ActiveSession: { sessionId: string };
-  SessionDetail: { sessionId: string };
   SessionFinished: { sessionId: string };
-  AddExercise: { sessionId: string };
+  Exercise: { sessionId: string; exerciseId: string };
 };
 
 export type LoginScreenProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
 export type RegisterScreenProps = NativeStackScreenProps<RootStackParamList, 'Register'>;
 export type SessionHubScreenProps = NativeStackScreenProps<RootStackParamList, 'SessionHub'>;
 export type ActiveSessionScreenProps = NativeStackScreenProps<RootStackParamList, 'ActiveSession'>;
-export type SessionDetailScreenProps = NativeStackScreenProps<RootStackParamList, 'SessionDetail'>;
 export type SessionFinishedScreenProps = NativeStackScreenProps<
   RootStackParamList,
   'SessionFinished'
 >;
-export type AddExerciseScreenProps = NativeStackScreenProps<RootStackParamList, 'AddExercise'>;
+export type ExerciseScreenProps = NativeStackScreenProps<RootStackParamList, 'Exercise'>;

@@ -35,6 +35,7 @@ export interface GetSessionsQuery {
 // Repository interface — Dependency Inversion boundary.
 // NO fetch(), NO HTTP details here.
 // userId removed from all methods — server extracts it from JWT.
+// startExercise/finishExercise removed — exercise state derived from sets client-side.
 export interface ISessionRepository {
   // Session
   createSession(label?: string, inheritFromSessionId?: string): Promise<Session>;
@@ -52,8 +53,6 @@ export interface ISessionRepository {
     exerciseId: string,
     input: UpdateExerciseInput,
   ): Promise<Exercise>;
-  startExercise(sessionId: string, exerciseId: string): Promise<Exercise>;
-  finishExercise(sessionId: string, exerciseId: string): Promise<Exercise>;
   deleteExercise(sessionId: string, exerciseId: string): Promise<void>;
 
   // Sets
