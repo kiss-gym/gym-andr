@@ -2,7 +2,6 @@ import React, { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { isActive } from '@domain/session/Session';
 import { useAuth } from '@presentation/context/AuthContext';
-import { useSession } from '@presentation/context/SessionContext';
 import { SessionHubScreenProps } from '@presentation/navigation/types';
 import { serviceLocator } from '@src/ServiceLocator';
 import { useSessionHubData } from '@presentation/hooks/useSessionHubData';
@@ -12,7 +11,6 @@ import { HubActionArea } from '../components/session-hub/HubActionArea';
 
 export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }) => {
   const { user, logout } = useAuth();
-  const { startNewSession, inheritLastSession } = useSession();
   const s = styles();
 
   const { sessions, selectedSession, isLoading, reload, selectSession } = useSessionHubData();
@@ -103,7 +101,7 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
               setIsActing(true);
               try {
                 await serviceLocator.finishSession.execute(activeSession.id);
-                const session = await startNewSession();
+                const session = await serviceLocator.createSession.execute();
                 navigation.navigate('ActiveSession', { sessionId: session.id });
               } catch (e) {
                 Alert.alert('Error', (e as Error).message);
@@ -117,13 +115,14 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
     }
 
     setIsActing(true);
-    startNewSession()
+    serviceLocator.createSession
+      .execute()
       .then(session => navigation.navigate('ActiveSession', { sessionId: session.id }))
       .catch(e => {
         Alert.alert('Error', (e as Error).message);
         setIsActing(false);
       });
-  }, [sessions, startNewSession, navigation]);
+  }, [sessions, navigation]);
 
   // ── Copy Selected — userId removed ──────────────────────────────────────────
 
@@ -143,7 +142,7 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
               setIsActing(true);
               try {
                 await serviceLocator.finishSession.execute(activeSession.id);
-                const session = await inheritLastSession(selectedSession.id);
+                const session = await serviceLocator.inheritSession.execute(selectedSession.id);
                 navigation.navigate('ActiveSession', { sessionId: session.id });
               } catch (e) {
                 Alert.alert('Error', (e as Error).message);
@@ -157,13 +156,14 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
     }
 
     setIsActing(true);
-    inheritLastSession(selectedSession.id)
+    serviceLocator.inheritSession
+      .execute(selectedSession.id)
       .then(session => navigation.navigate('ActiveSession', { sessionId: session.id }))
       .catch(e => {
         Alert.alert('Error', (e as Error).message);
         setIsActing(false);
       });
-  }, [selectedSession, sessions, inheritLastSession, navigation]);
+  }, [selectedSession, sessions, navigation]);
 
   // ── Render ──────────────────────────────────────────────────────────────────
 

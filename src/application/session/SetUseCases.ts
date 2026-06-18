@@ -65,7 +65,7 @@ export class DeleteSetUseCase {
 }
 
 // ── ToggleSetCompletionUseCase ────────────────────────────────────────────────
-// Wraps complete + uncomplete — screen passes current isCompleted,
+// Wraps complete + incomplete — screen passes current isCompleted,
 // use case picks the right endpoint.
 
 export class ToggleSetCompletionUseCase {

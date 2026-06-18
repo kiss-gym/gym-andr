@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '@presentation/context/AuthContext';
+import { SessionProvider } from '@presentation/context/SessionContext';
 import { useTheme } from '@presentation/theme';
 import { AppSplashScreen } from '@presentation/components/AppSplashScreen';
 import { LoginScreen } from '@presentation/screens/LoginScreen';
@@ -13,6 +14,20 @@ import { ExerciseScreen } from '@presentation/screens/ExerciseScreen';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+// Wraps a component in its own SessionProvider instance.
+const withSession = <P extends object>(Component: React.ComponentType<P>): React.FC<P> =>
+  function WithSession(props: P) {
+    return (
+      <SessionProvider>
+        <Component {...props} />
+      </SessionProvider>
+    );
+  };
+
+const ActiveSessionWithProvider = withSession(ActiveSessionScreen);
+const SessionFinishedWithProvider = withSession(SessionFinishedScreen);
+const ExerciseWithProvider = withSession(ExerciseScreen);
 
 export const RootNavigator: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -41,9 +56,9 @@ export const RootNavigator: React.FC = () => {
           // ── App stack ─────────────────────────────────────────────────────
           <>
             <Stack.Screen name="SessionHub" component={SessionHubScreen} />
-            <Stack.Screen name="ActiveSession" component={ActiveSessionScreen} />
-            <Stack.Screen name="SessionFinished" component={SessionFinishedScreen} />
-            <Stack.Screen name="Exercise" component={ExerciseScreen} />
+            <Stack.Screen name="ActiveSession" component={ActiveSessionWithProvider} />
+            <Stack.Screen name="SessionFinished" component={SessionFinishedWithProvider} />
+            <Stack.Screen name="Exercise" component={ExerciseWithProvider} />
           </>
         )}
       </Stack.Navigator>

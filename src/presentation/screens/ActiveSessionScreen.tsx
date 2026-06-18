@@ -593,7 +593,7 @@ export const ActiveSessionScreen: React.FC<ActiveSessionScreenProps> = ({ route,
             key={exercise.id}
             exercise={exercise}
             isSelected={selectedId === exercise.id}
-            isSessionActive={!!isSessionActive}
+            isSessionActive={isSessionActive}
             onSelect={() => handleItemTap(exercise.id)}
             onNavigate={() => {
               setSelectedId(exercise.id);

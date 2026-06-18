@@ -393,7 +393,7 @@ export const ExerciseScreen: React.FC<ExerciseScreenProps> = ({ route, navigatio
           <SetRow
             key={set.id}
             set={set}
-            isSessionActive={!!isSessionActive}
+            isSessionActive={isSessionActive}
             onToggle={() => void handleToggle(set.id, set.isCompleted)}
             onUpdateWeight={text => void handleUpdateWeight(set.id, text)}
             onUpdateReps={text => void handleUpdateReps(set.id, text)}

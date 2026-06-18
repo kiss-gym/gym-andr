@@ -20,10 +20,3 @@ export const isExerciseInProgress = (exercise: Exercise): boolean =>
 
 export const completedSetCount = (exercise: Exercise): number =>
   exercise.sets.filter(s => s.isCompleted).length;
-
-// Derive elapsed seconds (kept for potential future use in ExerciseScreen)
-export const elapsedSeconds = (exercise: Exercise): number => {
-  if (!exercise.startedAt) return 0;
-  const end = exercise.realEndAt ?? new Date();
-  return Math.floor((end.getTime() - exercise.startedAt.getTime()) / 1000);
-};
