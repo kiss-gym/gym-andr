@@ -487,7 +487,17 @@ export const ActiveSessionScreen: React.FC<ActiveSessionScreenProps> = ({ route,
     <KeyboardAvoidingView style={s.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       {/* ── Area 1: Header ── */}
       <View style={s.header}>
-        <Pressable style={s.backBtn} hitSlop={12} onPress={() => navigation.navigate('SessionHub')}>
+        <Pressable
+          style={s.backBtn}
+          hitSlop={12}
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('SessionHub');
+            }
+          }}
+        >
           <Text style={s.backArrow}>‹</Text>
           <Text style={s.backLabel}>Sessions</Text>
         </Pressable>
@@ -593,7 +603,7 @@ export const ActiveSessionScreen: React.FC<ActiveSessionScreenProps> = ({ route,
             key={exercise.id}
             exercise={exercise}
             isSelected={selectedId === exercise.id}
-            isSessionActive={isSessionActive}
+            isSessionActive={!!isSessionActive}
             onSelect={() => handleItemTap(exercise.id)}
             onNavigate={() => {
               setSelectedId(exercise.id);
