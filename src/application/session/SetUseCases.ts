@@ -21,9 +21,6 @@ export class UpdateExerciseUseCase {
 }
 
 // ── AddSetUseCase ─────────────────────────────────────────────────────────────
-// If no sets exist → creates blank set { weight: null, repetitions: null }
-// If sets exist    → copies last set via copy-last endpoint
-// Smart behaviour encapsulated in use case — screens don't need to know.
 
 export class AddSetUseCase {
   constructor(private readonly sessionRepo: ISessionRepository) {}
@@ -65,8 +62,6 @@ export class DeleteSetUseCase {
 }
 
 // ── ToggleSetCompletionUseCase ────────────────────────────────────────────────
-// Wraps complete + incomplete — screen passes current isCompleted,
-// use case picks the right endpoint.
 
 export class ToggleSetCompletionUseCase {
   constructor(private readonly sessionRepo: ISessionRepository) {}
