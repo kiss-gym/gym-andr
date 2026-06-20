@@ -35,7 +35,10 @@ export const AppSplashScreen: React.FC = () => {
         </View>
 
         <Text style={s.timer}>{formatElapsed(elapsedSeconds)}</Text>
-        <Text style={s.status}>Warming up your session...</Text>
+        <Text style={s.status}>
+          Warming up your session.{'\n'}
+          This may take up to 2 minutes.
+        </Text>
       </View>
     </View>
   );
