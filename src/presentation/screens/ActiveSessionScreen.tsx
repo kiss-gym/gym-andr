@@ -77,7 +77,7 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
 
   const accentColor = done ? '#534AB7' : inProgress ? theme.accent : theme.border;
   const pillBg = done ? '#1E1A3A' : inProgress ? '#0A1F14' : theme.surface;
-  const pillLabel = done ? 'Done' : inProgress ? 'In Progress' : 'No Sets';
+  const pillLabel = done ? 'Done' : inProgress ? 'In Progress' : '';
   const pillColor = done ? '#AFA9EC' : inProgress ? '#9FE1CB' : theme.textMuted;
 
   // Non-empty sets: have at least one value or are completed
@@ -141,17 +141,15 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
             </View>
           )}
         </View>
-      </Pressable>
-
-      {/* Navigate › */}
-      <Pressable
-        style={s.navBtn}
-        onPress={onNavigate}
-        hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-      >
-        <View style={s.navCircle}>
-          <Text style={s.navChevron}>›</Text>
-        </View>
+        <Pressable
+          onPress={onNavigate}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={s.navChevron}
+        >
+          <View style={s.chevronCircle}>
+            <Text style={s.chevron}>›</Text>
+          </View>
+        </Pressable>
       </Pressable>
 
       {/* Delete 🗑 — only for active sessions */}
@@ -240,19 +238,22 @@ const exerciseItemStyles = (theme: AppTheme, isSelected: boolean, accentColor: s
     },
     checkDone: { backgroundColor: theme.accent, borderColor: theme.accent },
     checkMark: { fontSize: 13, color: '#0E0E0F', fontWeight: '700' },
-    navBtn: { marginLeft: 8 },
-    navCircle: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: isSelected ? 'rgba(198,241,53,0.15)' : theme.border,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
     navChevron: {
+      alignSelf: 'center',
+      marginLeft: 20,
+    },
+    chevron: {
       fontSize: 22,
       color: isSelected ? theme.accent : theme.textSecondary,
       lineHeight: 26,
+    },
+    chevronCircle: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: isSelected ? (isSelected ? '#1A3010' : '#1E1A3A') : theme.border,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     deleteBtn: { marginLeft: 10 },
     deleteIcon: { fontSize: 16 },
@@ -356,7 +357,7 @@ export const ActiveSessionScreen: React.FC<ActiveSessionScreenProps> = ({ route,
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') return;
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       quality: 0.8,
     });
@@ -603,7 +604,7 @@ export const ActiveSessionScreen: React.FC<ActiveSessionScreenProps> = ({ route,
             key={exercise.id}
             exercise={exercise}
             isSelected={selectedId === exercise.id}
-            isSessionActive={!!isSessionActive}
+            isSessionActive={isSessionActive}
             onSelect={() => handleItemTap(exercise.id)}
             onNavigate={() => {
               setSelectedId(exercise.id);
