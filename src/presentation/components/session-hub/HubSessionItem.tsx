@@ -58,11 +58,13 @@ export const HubSessionItem: React.FC<HubSessionItemProps> = ({
           </Text>
         </View>
 
-        <Pressable onPress={onNavigate} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <View style={s.chevronCircle}>
-            <Text style={s.chevron}>›</Text>
-          </View>
-        </Pressable>
+        {active && (
+          <Pressable onPress={onNavigate} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <View style={s.chevronCircle}>
+              <Text style={s.chevron}>›</Text>
+            </View>
+          </Pressable>
+        )}
       </Pressable>
 
       <Pressable

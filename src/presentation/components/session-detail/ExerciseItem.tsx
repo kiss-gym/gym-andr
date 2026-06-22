@@ -39,9 +39,16 @@ export const ExerciseItem: React.FC<ExerciseItemProps> = ({
   const totalSets = exercise.sets.length;
 
   const accentColor = done ? '#534AB7' : inProgress ? theme.accent : theme.border;
-  const pillBg = done ? '#1E1A3A' : inProgress ? '#0A1F14' : theme.surface;
-  const pillLabel = done ? 'Done' : inProgress ? 'In Progress' : '';
-  const pillColor = done ? '#AFA9EC' : inProgress ? '#9FE1CB' : theme.textMuted;
+  const pillBg =
+    done && isSessionActive ? '#1E1A3A' : inProgress && isSessionActive ? '#0A1F14' : theme.surface;
+  const pillLabel =
+    done && isSessionActive ? 'Done' : inProgress && isSessionActive ? 'In Progress' : '';
+  const pillColor =
+    done && isSessionActive
+      ? '#AFA9EC'
+      : inProgress && isSessionActive
+        ? '#9FE1CB'
+        : theme.textMuted;
 
   const visibleSets = exercise.sets.filter(
     s => s.weight !== null || s.repetitions !== null || s.isCompleted,
@@ -95,8 +102,15 @@ export const ExerciseItem: React.FC<ExerciseItemProps> = ({
                   <Text style={s.setReps}>
                     {set.repetitions !== null ? `×${set.repetitions}` : '—'}
                   </Text>
-                  <View style={[s.check, set.isCompleted && s.checkDone]}>
-                    {set.isCompleted && <Text style={s.checkMark}>✓</Text>}
+                  <View
+                    style={[
+                      s.check,
+                      set.isCompleted && (isSessionActive ? s.checkDone : s.checkDoneInactive),
+                    ]}
+                  >
+                    {set.isCompleted && (
+                      <Text style={[s.checkMark, !isSessionActive && s.checkMarkInactive]}>✓</Text>
+                    )}
                   </View>
                 </Pressable>
               ))}
@@ -104,15 +118,17 @@ export const ExerciseItem: React.FC<ExerciseItemProps> = ({
           )}
         </View>
 
-        <Pressable
-          onPress={onNavigate}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          style={s.navChevron}
-        >
-          <View style={s.chevronCircle}>
-            <Text style={s.chevron}>›</Text>
-          </View>
-        </Pressable>
+        {isSessionActive && (
+          <Pressable
+            onPress={onNavigate}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={s.navChevron}
+          >
+            <View style={s.chevronCircle}>
+              <Text style={s.chevron}>›</Text>
+            </View>
+          </Pressable>
+        )}
       </Pressable>
 
       {/* Delete 🗑 — only for active sessions */}
@@ -215,4 +231,6 @@ const styles = (theme: AppTheme, isSelected: boolean, accentColor: string) =>
     },
     deleteBtn: { marginLeft: 10 },
     deleteIcon: { fontSize: 16 },
+    checkDoneInactive: { backgroundColor: theme.border, borderColor: theme.border },
+    checkMarkInactive: { color: theme.textMuted },
   });
