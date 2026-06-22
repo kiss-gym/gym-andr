@@ -1,12 +1,16 @@
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Session, isActive } from '@domain/session/Session';
 import { AppTheme, useTheme } from '@presentation/theme';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
+interface SelectedSessionInfo {
+  isActive: boolean;
+  label: string | null | undefined;
+}
+
 interface HubActionAreaProps {
-  selectedSession: Session | null;
+  selectedSession: SelectedSessionInfo | null;
   hasAnySessions: boolean;
   isActing: boolean;
   onContinue: () => void;
@@ -51,7 +55,7 @@ export const HubActionArea: React.FC<HubActionAreaProps> = ({
   }
 
   // ── Active session selected ─────────────────────────────────────────────────
-  if (selectedSession && isActive(selectedSession)) {
+  if (selectedSession && selectedSession.isActive) {
     return (
       <View style={s.area}>
         <Pressable
@@ -80,7 +84,7 @@ export const HubActionArea: React.FC<HubActionAreaProps> = ({
   }
 
   // ── Finished session selected ───────────────────────────────────────────────
-  if (selectedSession && !isActive(selectedSession)) {
+  if (selectedSession && !selectedSession.isActive) {
     const copyHint = selectedSession.label ?? 'selected session';
     return (
       <View style={s.area}>

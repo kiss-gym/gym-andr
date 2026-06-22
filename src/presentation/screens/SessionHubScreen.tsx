@@ -189,7 +189,11 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
       </ScrollView>
 
       <HubActionArea
-        selectedSession={selectedSession}
+        selectedSession={
+          selectedSession
+            ? { isActive: isActive(selectedSession), label: selectedSession.label }
+            : null
+        }
         hasAnySessions={sessions.length > 0}
         isActing={isLoading || isActing}
         onContinue={handleContinue}
