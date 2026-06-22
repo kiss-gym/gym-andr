@@ -21,7 +21,7 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
   const handleNavigate = useCallback(
     (sessionId: string): void => {
       selectSession(sessionId);
-      navigation.navigate('ActiveSession', { sessionId });
+      navigation.navigate('SessionDetail', { sessionId });
     },
     [navigation, selectSession],
   );
@@ -82,7 +82,7 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
 
   const handleContinue = useCallback((): void => {
     if (!selectedSession || !isActive(selectedSession)) return;
-    navigation.navigate('ActiveSession', { sessionId: selectedSession.id });
+    navigation.navigate('SessionDetail', { sessionId: selectedSession.id });
   }, [selectedSession, navigation]);
 
   // ── Create New — userId removed ─────────────────────────────────────────────
@@ -102,7 +102,7 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
               try {
                 await serviceLocator.finishSession.execute(activeSession.id);
                 const session = await serviceLocator.createSession.execute();
-                navigation.navigate('ActiveSession', { sessionId: session.id });
+                navigation.navigate('SessionDetail', { sessionId: session.id });
               } catch (e) {
                 Alert.alert('Error', (e as Error).message);
                 setIsActing(false);
@@ -117,7 +117,7 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
     setIsActing(true);
     serviceLocator.createSession
       .execute()
-      .then(session => navigation.navigate('ActiveSession', { sessionId: session.id }))
+      .then(session => navigation.navigate('SessionDetail', { sessionId: session.id }))
       .catch(e => {
         Alert.alert('Error', (e as Error).message);
         setIsActing(false);
@@ -143,7 +143,7 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
               try {
                 await serviceLocator.finishSession.execute(activeSession.id);
                 const session = await serviceLocator.inheritSession.execute(selectedSession.id);
-                navigation.navigate('ActiveSession', { sessionId: session.id });
+                navigation.navigate('SessionDetail', { sessionId: session.id });
               } catch (e) {
                 Alert.alert('Error', (e as Error).message);
                 setIsActing(false);
@@ -158,7 +158,7 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
     setIsActing(true);
     serviceLocator.inheritSession
       .execute(selectedSession.id)
-      .then(session => navigation.navigate('ActiveSession', { sessionId: session.id }))
+      .then(session => navigation.navigate('SessionDetail', { sessionId: session.id }))
       .catch(e => {
         Alert.alert('Error', (e as Error).message);
         setIsActing(false);

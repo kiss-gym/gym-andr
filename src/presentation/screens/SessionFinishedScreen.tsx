@@ -44,9 +44,6 @@ export const SessionFinishedScreen: React.FC<SessionFinishedScreenProps> = ({ na
 
   const handleBackToHub = (): void => {
     resetSession();
-    // Prefer popping back to the existing SessionHub instance over
-    // re-navigating by name, which can remount it and reset local state
-    // (see ActiveSessionScreen's back button for the full explanation).
     if (navigation.canGoBack()) {
       navigation.goBack();
     } else {

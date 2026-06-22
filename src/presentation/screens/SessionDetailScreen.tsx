@@ -22,7 +22,7 @@ import {
 import { Session } from '@domain/session/Session';
 import { useSession } from '@presentation/context/SessionContext';
 import { AppTheme, useTheme } from '@presentation/theme';
-import { ActiveSessionScreenProps } from '@presentation/navigation/types';
+import { SessionDetailScreenProps } from '@presentation/navigation/types';
 
 // ── Suggestion pool ───────────────────────────────────────────────────────────
 
@@ -261,7 +261,7 @@ const exerciseItemStyles = (theme: AppTheme, isSelected: boolean, accentColor: s
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 
-export const ActiveSessionScreen: React.FC<ActiveSessionScreenProps> = ({ route, navigation }) => {
+export const SessionDetailScreen: React.FC<SessionDetailScreenProps> = ({ route, navigation }) => {
   const { sessionId } = route.params;
   const theme = useTheme();
   const s = styles(theme);
@@ -385,7 +385,7 @@ export const ActiveSessionScreen: React.FC<ActiveSessionScreenProps> = ({ route,
     }
   }, [draftName, draftPhotoUri, addExercise]);
 
-  // ── Delete exercise ───────────────────────────────────────────────────────
+  // ── Delete exercise ──────────────���────────────────────────────────────────
   const handleDelete = useCallback(
     (exerciseId: string): void => {
       Alert.alert('Remove exercise?', 'This exercise will be removed from the session.', [
@@ -410,7 +410,7 @@ export const ActiveSessionScreen: React.FC<ActiveSessionScreenProps> = ({ route,
     [deleteExercise, selectedId],
   );
 
-  // ── Finish session ────────────────────────────────────────────────────────
+  // ── Finish session ───────────────────────────────��────────────────────────
   const handleFinishSession = useCallback(async (): Promise<void> => {
     Alert.alert('Finish session?', 'Mark this session as complete?', [
       { text: 'Cancel', style: 'cancel' },

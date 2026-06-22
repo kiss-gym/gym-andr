@@ -8,3 +8,11 @@
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
+
+# Machine-specific / personal files
+*.iml
+/modules.xml
+/vcs.xml
+/markdown.xml
+/copilotDiffState.xml
+

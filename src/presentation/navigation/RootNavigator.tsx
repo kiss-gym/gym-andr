@@ -8,7 +8,7 @@ import { AppSplashScreen } from '@presentation/components/AppSplashScreen';
 import { LoginScreen } from '@presentation/screens/LoginScreen';
 import { RegisterScreen } from '@presentation/screens/RegisterScreen';
 import { SessionHubScreen } from '@presentation/screens/SessionHubScreen';
-import { ActiveSessionScreen } from '@presentation/screens/ActiveSessionScreen';
+import { SessionDetailScreen } from '@presentation/screens/SessionDetailScreen';
 import { SessionFinishedScreen } from '@presentation/screens/SessionFinishedScreen';
 import { ExerciseScreen } from '@presentation/screens/ExerciseScreen';
 import { RootStackParamList } from './types';
@@ -25,7 +25,7 @@ const withSession = <P extends object>(Component: React.ComponentType<P>): React
     );
   };
 
-const ActiveSessionWithProvider = withSession(ActiveSessionScreen);
+const SessionDetailWithProvider = withSession(SessionDetailScreen);
 const SessionFinishedWithProvider = withSession(SessionFinishedScreen);
 const ExerciseWithProvider = withSession(ExerciseScreen);
 
@@ -56,7 +56,7 @@ export const RootNavigator: React.FC = () => {
           // ── App stack ─────────────────────────────────────────────────────
           <>
             <Stack.Screen name="SessionHub" component={SessionHubScreen} />
-            <Stack.Screen name="ActiveSession" component={ActiveSessionWithProvider} />
+            <Stack.Screen name="SessionDetail" component={SessionDetailWithProvider} />
             <Stack.Screen name="SessionFinished" component={SessionFinishedWithProvider} />
             <Stack.Screen name="Exercise" component={ExerciseWithProvider} />
           </>
