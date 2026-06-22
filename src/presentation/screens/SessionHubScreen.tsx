@@ -94,14 +94,14 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
     navigation.navigate('SessionDetail', { sessionId: selectedSession.id });
   }, [selectedSession, navigation]);
 
-  // ── Create New — userId removed ─────────────────────────────────────────────
+  // ── Create New  ────────────────────────────────────────────────────────────
 
   const handleCreateNew = useCallback((): void => {
     const activeSession = sessions.find(s => isActive(s));
     if (activeSession) {
       Alert.alert(
-        'Active session in progress',
-        'You must finish your active session before starting a new one.',
+        'There is an active session',
+        'Active session must be finished before starting a new one.',
         [
           { text: 'Cancel', style: 'cancel' },
           {
@@ -141,12 +141,12 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
     const activeSession = sessions.find(s => isActive(s));
     if (activeSession) {
       Alert.alert(
-        'Parent session is active and in progress',
-        'You must finish your active session before starting a new one.',
+        'There is an active session',
+        'Active session must be finished before starting a new one.',
         [
           { text: 'Cancel', style: 'cancel' },
           {
-            text: 'Finish & Inherit',
+            text: 'Finish & Inherit & Start',
             onPress: async (): Promise<void> => {
               setIsActing(true);
               try {

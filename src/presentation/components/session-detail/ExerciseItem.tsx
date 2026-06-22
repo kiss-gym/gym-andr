@@ -80,8 +80,8 @@ export const ExerciseItem: React.FC<ExerciseItemProps> = ({
             {totalSets === 0 ? 'No sets' : `${completedCount} / ${totalSets} sets done`}
           </Text>
 
-          {/* Expanded: set completion toggles */}
-          {isSelected && visibleSets.length > 0 && (
+          {/* Expanded */}
+          {visibleSets.length > 0 && (
             <View style={s.setList}>
               {visibleSets.map(set => (
                 <Pressable
