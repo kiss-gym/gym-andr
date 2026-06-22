@@ -67,14 +67,6 @@ const styles = (theme: AppTheme): ReturnType<typeof StyleSheet.create> =>
       fontWeight: '700',
       color: theme.textPrimary,
     },
-    sessionLine: {
-      fontSize: 12,
-      color: theme.textSecondary,
-      fontVariant: ['tabular-nums'],
-    },
-    sessionLineActive: {
-      color: theme.accent,
-    },
     menuBtn: {
       width: 36,
       height: 36,
