@@ -16,6 +16,15 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
   const { sessions, selectedSession, isLoading, reload, selectSession } = useSessionHubData();
   const [isActing, setIsActing] = useState(false);
 
+  // ── Logout ──────────────────────────────────────────────────────────────────
+
+  const handleLogout = useCallback((): void => {
+    Alert.alert('Menu', undefined, [
+      { text: 'Log out', style: 'destructive', onPress: logout },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  }, [logout]);
+
   // ── Navigation ──────────────────────────────────────────────────────────────
 
   const handleNavigate = useCallback(
@@ -169,7 +178,7 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
 
   return (
     <View style={s.root}>
-      <HubHeader userName={user?.name ?? user?.email ?? 'Athlete'} onLogout={logout} />
+      <HubHeader userName={user?.name ?? user?.email ?? 'Athlete'} onLogout={handleLogout} />
 
       <ScrollView
         style={s.list}

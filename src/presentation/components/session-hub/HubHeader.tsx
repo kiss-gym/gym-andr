@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { AppTheme, useTheme } from '@presentation/theme';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -17,13 +17,6 @@ export const HubHeader: React.FC<HubHeaderProps> = ({ userName, onLogout }) => {
   const theme = useTheme();
   const s = styles(theme);
 
-  const handleMenuPress = (): void => {
-    Alert.alert('Menu', undefined, [
-      { text: 'Log out', style: 'destructive', onPress: onLogout },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
-  };
-
   return (
     <View style={s.header}>
       <View style={s.textBlock}>
@@ -35,7 +28,7 @@ export const HubHeader: React.FC<HubHeaderProps> = ({ userName, onLogout }) => {
 
       <Pressable
         style={({ pressed }) => [s.menuBtn, pressed && s.menuBtnPressed]}
-        onPress={handleMenuPress}
+        onPress={onLogout}
         hitSlop={12}
       >
         <Text style={s.menuIcon}>≡</Text>
