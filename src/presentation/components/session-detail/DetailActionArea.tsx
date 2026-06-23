@@ -24,16 +24,24 @@ export const DetailActionArea: React.FC<DetailActionAreaProps> = ({
 
   return (
     <View style={s.actionArea}>
-      <Text style={s.actionLabel}>ACTIONS</Text>
       <Pressable
-        style={[s.btnPrimary, showDraft && s.btnDisabled]}
+        style={({ pressed }) => [s.btn, showDraft && s.btnDisabled, pressed && s.pressed]}
         onPress={onAddNew}
         disabled={showDraft}
       >
-        <Text style={s.btnPrimaryLabel}>+ Add Exercise</Text>
+        <Text style={s.btnLabel}>+ Add Exercise</Text>
       </Pressable>
-      <Pressable style={s.btnFinishSession} onPress={onFinishSession} disabled={isActing}>
-        <Text style={s.btnFinishSessionLabel}>⏹ Finish Session</Text>
+      <Pressable
+        style={({ pressed }) => [
+          s.btn,
+          s.btnSecondary,
+          isActing && s.btnDisabled,
+          pressed && s.pressed,
+        ]}
+        onPress={onFinishSession}
+        disabled={isActing}
+      >
+        <Text style={s.btnLabel}>Finish Session</Text>
       </Pressable>
     </View>
   );
@@ -45,35 +53,37 @@ const styles = (theme: AppTheme): ReturnType<typeof StyleSheet.create> =>
   StyleSheet.create({
     actionArea: {
       paddingHorizontal: 20,
-      paddingTop: 12,
+      paddingTop: 14,
       paddingBottom: 32,
       borderTopWidth: 0.5,
       borderTopColor: theme.border,
-      gap: 8,
+      gap: 10,
     },
-    actionLabel: {
-      fontSize: 10,
-      fontWeight: '600',
-      letterSpacing: 1.2,
-      textTransform: 'uppercase',
-      color: theme.textMuted,
-      marginBottom: 2,
-    },
-    btnPrimary: {
-      backgroundColor: theme.accent,
+    btn: {
+      backgroundColor: theme.accentLight,
+      borderWidth: 1.5,
+      borderColor: theme.accent,
       borderRadius: 14,
-      paddingVertical: 13,
+      paddingVertical: 14,
       alignItems: 'center',
+      elevation: 2,
+      shadowColor: theme.accent,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.15,
+      shadowRadius: 4,
     },
-    btnDisabled: { opacity: 0.4 },
-    btnPrimaryLabel: { fontSize: 15, fontWeight: '700', color: '#0E0E0F' },
-    btnFinishSession: {
-      backgroundColor: theme.surface,
-      borderWidth: 0.5,
-      borderColor: theme.border,
-      borderRadius: 14,
-      paddingVertical: 10,
-      alignItems: 'center',
+    btnSecondary: {
+      borderWidth: 1,
+      opacity: 0.85,
+      elevation: 0,
+      shadowOpacity: 0,
     },
-    btnFinishSessionLabel: { fontSize: 12, color: theme.textMuted },
+    btnDisabled: { opacity: 0.35 },
+    btnLabel: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: theme.accentLightText,
+      letterSpacing: 0.2,
+    },
+    pressed: { opacity: 0.75, transform: [{ scale: 0.97 }] },
   });

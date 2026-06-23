@@ -78,7 +78,7 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       onPress={onPress}
       disabled={isDisabled}
     >
-      {isLoading ? <ActivityIndicator color="#0E0E0F" /> : <Text style={s.label}>{label}</Text>}
+      {isLoading ? <ActivityIndicator color={theme.accentLightText} /> : <Text style={s.label}>{label}</Text>}
     </Pressable>
   );
 };
@@ -87,22 +87,29 @@ const buttonStyles = (theme: AppTheme): ReturnType<typeof StyleSheet.create> =>
   StyleSheet.create({
     button: {
       height: 54,
-      backgroundColor: theme.accent,
+      backgroundColor: theme.accentLight,
+      borderWidth: 1.5,
+      borderColor: theme.accent,
       borderRadius: 10,
       alignItems: 'center',
       justifyContent: 'center',
+      elevation: 2,
+      shadowColor: theme.accent,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.18,
+      shadowRadius: 4,
     },
     buttonDisabled: {
-      opacity: 0.5,
+      opacity: 0.45,
     },
     buttonPressed: {
-      opacity: 0.85,
-      transform: [{ scale: 0.98 }],
+      opacity: 0.82,
+      transform: [{ scale: 0.97 }],
     },
     label: {
       fontSize: 16,
       fontWeight: '700',
-      color: '#0E0E0F', // always dark — accent is bright on both schemes
+      color: theme.accentLightText,
       letterSpacing: 0.5,
     },
   });
@@ -126,12 +133,16 @@ export const GhostButton: React.FC<GhostButtonProps> = ({ label, onPress, theme 
 
 const ghostStyles = (theme: AppTheme): ReturnType<typeof StyleSheet.create> =>
   StyleSheet.create({
-    button: { alignItems: 'center', paddingVertical: 10 },
+    button: {
+      alignItems: 'center',
+      paddingVertical: 10,
+      borderRadius: 8,
+    },
     pressed: { opacity: 0.6 },
     label: {
       fontSize: 14,
-      color: theme.accent,
-      fontWeight: '500',
+      color: theme.accentLightText,
+      fontWeight: '600',
     },
   });
 

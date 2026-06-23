@@ -14,6 +14,9 @@ const palette = {
     textSecondary: '#9A9A9E',
     textMuted: '#5A5A5E',
     danger: '#FF4C4C',
+    // Very-light-green button surface (dark mode)
+    accentLight: '#243D0A',
+    accentLightText: '#C6F135',
   },
 
   light: {
@@ -24,6 +27,9 @@ const palette = {
     textSecondary: '#5A5A5E',
     textMuted: '#9A9A9E',
     danger: '#D93232',
+    // Very-light-green button surface (light mode)
+    accentLight: '#E8FAB8',
+    accentLightText: '#2D5206',
   },
 } as const;
 
@@ -39,6 +45,10 @@ export interface AppTheme {
   textMuted: string;
   danger: string;
   accent: string;
+  /** Very-light-green: button background */
+  accentLight: string;
+  /** Text colour to use on accentLight backgrounds */
+  accentLightText: string;
   isDark: boolean;
 }
 

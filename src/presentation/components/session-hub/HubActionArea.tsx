@@ -139,58 +139,55 @@ const styles = (theme: AppTheme): ReturnType<typeof StyleSheet.create> =>
       justifyContent: 'center',
       minHeight: 80,
     },
-    areaLabel: {
-      fontSize: 10,
-      fontWeight: '600',
-      letterSpacing: 1.2,
-      textTransform: 'uppercase',
-      color: theme.textMuted,
-      marginBottom: 4,
-    },
 
-    // Primary button — lime, large
+    // All action buttons — very-light-green with accent border
     btnPrimary: {
-      backgroundColor: theme.accent,
+      backgroundColor: theme.accentLight,
+      borderWidth: 1.5,
+      borderColor: theme.accent,
       borderRadius: 14,
-      padding: 18,
+      padding: 16,
       gap: 2,
-    },
-    btnPrimaryIcon: {
-      fontSize: 20,
-      color: '#0E0E0F',
-      marginBottom: 2,
+      elevation: 2,
+      shadowColor: theme.accent,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.15,
+      shadowRadius: 4,
     },
     btnPrimaryLabel: {
-      fontSize: 17,
+      fontSize: 16,
       fontWeight: '800',
-      color: '#0E0E0F',
+      color: theme.accentLightText,
       letterSpacing: 0.2,
     },
     btnPrimaryHint: {
       fontSize: 12,
-      color: '#4B5E0F',
+      color: theme.accentLightText,
+      opacity: 0.7,
       marginTop: 2,
     },
 
-    // Secondary button — surface, bordered
+    // Secondary — same family, slightly lighter weight
     btnSecondary: {
-      backgroundColor: theme.surface,
+      backgroundColor: theme.accentLight,
       borderWidth: 1,
-      borderColor: theme.border,
+      borderColor: theme.accent,
       borderRadius: 14,
       padding: 16,
       gap: 2,
+      opacity: 0.85,
     },
     btnSecondaryLabel: {
       fontSize: 15,
       fontWeight: '600',
-      color: theme.textPrimary,
+      color: theme.accentLightText,
     },
     btnSecondaryHint: {
       fontSize: 12,
-      color: theme.textSecondary,
+      color: theme.accentLightText,
+      opacity: 0.65,
       marginTop: 2,
     },
 
-    pressed: { opacity: 0.82, transform: [{ scale: 0.98 }] },
+    pressed: { opacity: 0.75, transform: [{ scale: 0.97 }] },
   });

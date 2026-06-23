@@ -412,14 +412,17 @@ export const ExerciseScreen: React.FC<ExerciseScreenProps> = ({ route, navigatio
       {/* ── Action area — only for active sessions ── */}
       {isSessionActive && (
         <View style={s.actionArea}>
-          <Text style={s.actionLabel}>ACTIONS</Text>
           <Pressable
-            style={[s.addSetBtn, isActing && s.addSetBtnDisabled]}
+            style={({ pressed }) => [
+              s.addSetBtn,
+              isActing && s.addSetBtnDisabled,
+              pressed && s.addSetBtnPressed,
+            ]}
             onPress={() => void handleAddSet()}
             disabled={isActing}
           >
             {isActing ? (
-              <ActivityIndicator color="#0E0E0F" />
+              <ActivityIndicator color={theme.accentLightText} />
             ) : (
               <Text style={s.addSetBtnLabel}>
                 {exercise.sets.length === 0 ? '+ Add Set' : '+ Add Set  (copy last)'}
@@ -555,13 +558,21 @@ const styles = (theme: AppTheme): ReturnType<typeof StyleSheet.create> =>
       marginBottom: 2,
     },
     addSetBtn: {
-      backgroundColor: theme.accent,
+      backgroundColor: theme.accentLight,
+      borderWidth: 1.5,
+      borderColor: theme.accent,
       borderRadius: 14,
-      paddingVertical: 13,
+      paddingVertical: 14,
       alignItems: 'center',
+      elevation: 2,
+      shadowColor: theme.accent,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.15,
+      shadowRadius: 4,
     },
-    addSetBtnDisabled: { opacity: 0.5 },
-    addSetBtnLabel: { fontSize: 15, fontWeight: '700', color: '#0E0E0F' },
+    addSetBtnDisabled: { opacity: 0.45 },
+    addSetBtnPressed: { opacity: 0.75, transform: [{ scale: 0.97 }] },
+    addSetBtnLabel: { fontSize: 15, fontWeight: '700', color: theme.accentLightText },
   });
 
 const imageStyles = StyleSheet.create({
