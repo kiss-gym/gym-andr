@@ -69,7 +69,7 @@ export const HubActionArea: React.FC<HubActionAreaProps> = ({
           style={({ pressed }) => [s.btnSecondary, pressed && s.pressed]}
           onPress={onInheritSelected}
         >
-          <Text style={s.btnPrimaryLabel}>↺ Inherit & Start</Text>
+          <Text style={s.btnPrimaryLabel}>+ Inherit & Start</Text>
           <Text style={s.btnSecondaryHint}>Will ask to finish active session and inherit it</Text>
         </Pressable>
         <Pressable
@@ -92,7 +92,7 @@ export const HubActionArea: React.FC<HubActionAreaProps> = ({
           style={({ pressed }) => [s.btnPrimary, pressed && s.pressed]}
           onPress={onInheritSelected}
         >
-          <Text style={s.btnPrimaryLabel}>↺ Inherit & Start</Text>
+          <Text style={s.btnPrimaryLabel}>+ Inherit & Start</Text>
           <Text style={s.btnPrimaryHint} numberOfLines={1}>
             {`Inherit exercises from "${copyHint}"`}
           </Text>
