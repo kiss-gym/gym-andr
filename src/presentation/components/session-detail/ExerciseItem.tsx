@@ -39,8 +39,13 @@ export const ExerciseItem: React.FC<ExerciseItemProps> = ({
   const totalSets = exercise.sets.length;
 
   const accentColor = done ? '#534AB7' : inProgress ? theme.accent : theme.border;
-  const pillBg =
-    done && isSessionActive ? '#1E1A3A' : inProgress && isSessionActive ? '#0A1F14' : theme.surface;
+  const pillBackground =
+    // eslint-disable-next-line prettier/prettier
+    done && isSessionActive
+      ? '#1E1A3A'
+      : inProgress && isSessionActive
+        ? '#0A1F14'
+        : theme.surface;
   const pillLabel =
     done && isSessionActive ? 'Done' : inProgress && isSessionActive ? 'In Progress' : '';
   const pillColor =
@@ -79,7 +84,7 @@ export const ExerciseItem: React.FC<ExerciseItemProps> = ({
             <Text style={s.label} numberOfLines={1}>
               {exercise.autoLabel}
             </Text>
-            <View style={[s.pill, { backgroundColor: pillBg }]}>
+            <View style={[s.pill, { backgroundColor: pillBackground }]}>
               <Text style={[s.pillText, { color: pillColor }]}>{pillLabel}</Text>
             </View>
           </View>
@@ -87,7 +92,7 @@ export const ExerciseItem: React.FC<ExerciseItemProps> = ({
             {totalSets === 0 ? 'No sets' : `${completedCount} / ${totalSets} sets done`}
           </Text>
 
-          {/* Expanded */}
+          {/* Expanded (always) */}
           {visibleSets.length > 0 && (
             <View style={s.setList}>
               {visibleSets.map(set => (
@@ -118,6 +123,7 @@ export const ExerciseItem: React.FC<ExerciseItemProps> = ({
           )}
         </View>
 
+        {/* Navigate inside — only for active sessions */}
         {isSessionActive && (
           <Pressable
             onPress={onNavigate}
@@ -131,7 +137,7 @@ export const ExerciseItem: React.FC<ExerciseItemProps> = ({
         )}
       </Pressable>
 
-      {/* Delete 🗑 — only for active sessions */}
+      {/* Delete — only for active sessions */}
       {isSessionActive && (
         <Pressable
           style={s.deleteBtn}
