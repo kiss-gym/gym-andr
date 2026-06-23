@@ -78,7 +78,11 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       onPress={onPress}
       disabled={isDisabled}
     >
-      {isLoading ? <ActivityIndicator color={theme.accentLightText} /> : <Text style={s.label}>{label}</Text>}
+      {isLoading ? (
+        <ActivityIndicator color={theme.accentLightText} />
+      ) : (
+        <Text style={s.label}>{label}</Text>
+      )}
     </Pressable>
   );
 };

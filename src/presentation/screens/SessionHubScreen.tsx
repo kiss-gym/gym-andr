@@ -87,13 +87,6 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
     [reload],
   );
 
-  // ── Continue ────────────────────────────────────────────────────────────────
-
-  const handleContinue = useCallback((): void => {
-    if (!selectedSession || !isActive(selectedSession)) return;
-    navigation.navigate('SessionDetail', { sessionId: selectedSession.id });
-  }, [selectedSession, navigation]);
-
   // ── Create New  ────────────────────────────────────────────────────────────
 
   const handleCreateNew = useCallback((): void => {
@@ -200,12 +193,14 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
       <HubActionArea
         selectedSession={
           selectedSession
-            ? { isActive: isActive(selectedSession), label: selectedSession.label }
+            ? {
+                isThereAnyActiveSession: sessions.find(s => isActive(s)) != null,
+                label: selectedSession.label,
+              }
             : null
         }
         hasAnySessions={sessions.length > 0}
         isActing={isLoading || isActing}
-        onContinue={handleContinue}
         onInheritSelected={handleInheritSelected}
         onCreateNew={handleCreateNew}
       />
