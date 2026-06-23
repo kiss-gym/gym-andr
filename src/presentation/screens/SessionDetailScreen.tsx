@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { isExerciseDone } from '@domain/session/Exercise';
 import { Session } from '@domain/session/Session';
 import { useSession } from '@presentation/context/SessionContext';
 import { AppTheme, useTheme } from '@presentation/theme';
@@ -83,14 +82,8 @@ export const SessionDetailScreen: React.FC<SessionDetailScreenProps> = ({ route,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSession?.id]);
 
-  // ── Sorted exercises: done last ───────────────────────────────────────────
-  const sortedExercises = currentSession
-    ? [...currentSession.exercises].sort((a, b) => {
-        const aScore = isExerciseDone(a) ? 1 : 0;
-        const bScore = isExerciseDone(b) ? 1 : 0;
-        return aScore - bScore;
-      })
-    : [];
+  // ── Sorted exercises: unsorted ───────────────────────────────────────────
+  const sortedExercises = currentSession ? [...currentSession.exercises] : [];
 
   // ── Item tap — confirm drop draft if exists ───────────────────────────────
   const handleItemTap = useCallback(
