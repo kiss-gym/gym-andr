@@ -111,6 +111,7 @@ function sessionReducer(state: SessionState, action: SessionAction): SessionStat
 
 interface SessionContextValue extends SessionState {
   restoreSession: (sessionId: string) => Promise<void>;
+  refreshSession: (sessionId: string) => Promise<void>;
   startNewSession: () => Promise<Session>;
   inheritLastSession: (inheritFromSessionId: string) => Promise<Session>;
   addExercise: (input: AddExerciseInput) => Promise<Exercise>;
@@ -157,6 +158,17 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     },
     [state.currentSession?.id],
   );
+
+  // Like restoreSession but always re-fetches — used on focus to pick up changes
+  // made in a child screen (which has its own isolated SessionProvider).
+  const refreshSession = useCallback(async (sessionId: string): Promise<void> => {
+    try {
+      const session = await serviceLocator.getSessionById.execute(sessionId);
+      dispatch({ type: 'SESSION_SET', payload: session });
+    } catch (e) {
+      dispatch({ type: 'ERROR', payload: (e as Error).message });
+    }
+  }, []);
 
   const startNewSession = useCallback(async (): Promise<Session> => {
     dispatch({ type: 'LOADING' });
@@ -349,6 +361,7 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       value={{
         ...state,
         restoreSession,
+        refreshSession,
         startNewSession,
         inheritLastSession,
         addExercise,

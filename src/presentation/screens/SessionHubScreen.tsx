@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { isActive } from '@domain/session/Session';
 import { useAuth } from '@presentation/context/AuthContext';
 import { SessionHubScreenProps } from '@presentation/navigation/types';
@@ -15,6 +16,12 @@ export const SessionHubScreen: React.FC<SessionHubScreenProps> = ({ navigation }
 
   const { sessions, selectedSession, isLoading, reload, selectSession } = useSessionHubData();
   const [isActing, setIsActing] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      void reload();
+    }, [reload]),
+  );
 
   // ── Logout ──────────────────────────────────────────────────────────────────
 

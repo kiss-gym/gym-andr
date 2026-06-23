@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { isExerciseDone } from '@domain/session/Exercise';
 import { Session } from '@domain/session/Session';
@@ -38,6 +39,7 @@ export const SessionDetailScreen: React.FC<SessionDetailScreenProps> = ({ route,
     isLoading,
     error,
     restoreSession,
+    refreshSession,
     addExercise,
     deleteExercise,
     finishSession,
@@ -65,6 +67,13 @@ export const SessionDetailScreen: React.FC<SessionDetailScreenProps> = ({ route,
       void restoreSession(sessionId);
     }
   }, [sessionId, currentSession?.id, restoreSession]);
+
+  // ── Refresh on focus — picks up changes made in ExerciseScreen ────────────
+  useFocusEffect(
+    useCallback(() => {
+      if (currentSession?.id === sessionId) void refreshSession(sessionId);
+    }, [sessionId, currentSession?.id, refreshSession]),
+  );
 
   // ── Auto-select first exercise ────────────────────────────────────────────
   useEffect(() => {

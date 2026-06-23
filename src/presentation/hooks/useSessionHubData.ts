@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Session, isActive } from '@domain/session/Session';
 import { serviceLocator } from '@src/ServiceLocator';
 
@@ -50,10 +50,6 @@ export const useSessionHubData = (): SessionHubData => {
       setIsLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
 
   const selectSession = useCallback((id: string): void => {
     setSelectedId(id);
