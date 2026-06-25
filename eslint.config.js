@@ -23,7 +23,7 @@ module.exports = defineConfig([
       '@typescript-eslint/explicit-function-return-type': 'warn',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       'react/self-closing-comp': 'warn',
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-console': ['warn', { allow: ['warn', 'error', 'debug'] }],
       'prettier/prettier': 'error',
     },
   },
