@@ -41,12 +41,8 @@ export const HubActionArea: React.FC<HubActionAreaProps> = ({
   if (!hasAnySessions) {
     return (
       <View style={s.area}>
-        <Pressable
-          style={({ pressed }) => [s.btnPrimary, pressed && s.pressed]}
-          onPress={onCreateNew}
-        >
-          <Text style={s.btnPrimaryLabel}>+ Create & Start New</Text>
-          <Text style={s.btnPrimaryHint}>Start your first session</Text>
+        <Pressable style={({ pressed }) => [s.btn, pressed && s.pressed]} onPress={onCreateNew}>
+          <Text style={s.btnLabel}>+ Create & Start New Session</Text>
         </Pressable>
       </View>
     );
@@ -57,18 +53,13 @@ export const HubActionArea: React.FC<HubActionAreaProps> = ({
     return (
       <View style={s.area}>
         <Pressable
-          style={({ pressed }) => [s.btnSecondary, pressed && s.pressed]}
+          style={({ pressed }) => [s.btn, pressed && s.pressed]}
           onPress={onInheritSelected}
         >
-          <Text style={s.btnPrimaryLabel}>+ Finish ➔ Copy & Start</Text>
-          <Text style={s.btnSecondaryHint}>Will ask to finish active session and inherit it</Text>
+          <Text style={s.btnLabel}>+ Finish ➔ Inherit & Start Session</Text>
         </Pressable>
-        <Pressable
-          style={({ pressed }) => [s.btnSecondary, pressed && s.pressed]}
-          onPress={onCreateNew}
-        >
-          <Text style={s.btnSecondaryLabel}>+ Finish ➔ Start New</Text>
-          <Text style={s.btnSecondaryHint}>Will ask to finish active session first</Text>
+        <Pressable style={({ pressed }) => [s.btn, pressed && s.pressed]} onPress={onCreateNew}>
+          <Text style={s.btnLabel}>+ Finish ➔ Start New</Text>
         </Pressable>
       </View>
     );
@@ -76,24 +67,16 @@ export const HubActionArea: React.FC<HubActionAreaProps> = ({
 
   // ── Finished session selected ───────────────────────────────────────────────
   if (selectedSession && !selectedSession.isThereAnyActiveSession) {
-    const copyHint = selectedSession.label ?? 'selected session';
     return (
       <View style={s.area}>
         <Pressable
-          style={({ pressed }) => [s.btnPrimary, pressed && s.pressed]}
+          style={({ pressed }) => [s.btn, pressed && s.pressed]}
           onPress={onInheritSelected}
         >
-          <Text style={s.btnPrimaryLabel}>+ Copy & Start</Text>
-          <Text style={s.btnPrimaryHint} numberOfLines={1}>
-            {`Inherit exercises from "${copyHint}"`}
-          </Text>
+          <Text style={s.btnLabel}>+ Inherit & Start Session</Text>
         </Pressable>
-        <Pressable
-          style={({ pressed }) => [s.btnSecondary, pressed && s.pressed]}
-          onPress={onCreateNew}
-        >
-          <Text style={s.btnSecondaryLabel}>+ Start New</Text>
-          <Text style={s.btnSecondaryHint}>Fresh blank session</Text>
+        <Pressable style={({ pressed }) => [s.btn, pressed && s.pressed]} onPress={onCreateNew}>
+          <Text style={s.btnLabel}>+ Create New & Start Session</Text>
         </Pressable>
       </View>
     );
@@ -102,12 +85,8 @@ export const HubActionArea: React.FC<HubActionAreaProps> = ({
   // ── Has sessions but nothing selected (shouldn't happen — safety fallback) ──
   return (
     <View style={s.area}>
-      <Pressable
-        style={({ pressed }) => [s.btnSecondary, pressed && s.pressed]}
-        onPress={onCreateNew}
-      >
-        <Text style={s.btnSecondaryLabel}>+ Create New & Start</Text>
-        <Text style={s.btnSecondaryHint}>Fresh blank session</Text>
+      <Pressable style={({ pressed }) => [s.btn, pressed && s.pressed]} onPress={onCreateNew}>
+        <Text style={s.btnLabel}>+ Create New & Start Session</Text>
       </Pressable>
     </View>
   );
@@ -131,54 +110,24 @@ const styles = (theme: AppTheme): ReturnType<typeof StyleSheet.create> =>
       minHeight: 80,
     },
 
-    // All action buttons — very-light-green with accent border
-    btnPrimary: {
+    btn: {
       backgroundColor: theme.accentLight,
       borderWidth: 1.5,
       borderColor: theme.accent,
       borderRadius: 14,
-      padding: 16,
-      gap: 2,
+      paddingVertical: 14,
+      alignItems: 'center',
       elevation: 2,
       shadowColor: theme.accent,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.15,
       shadowRadius: 4,
     },
-    btnPrimaryLabel: {
-      fontSize: 16,
-      fontWeight: '800',
+    btnLabel: {
+      fontSize: 15,
+      fontWeight: '700',
       color: theme.accentLightText,
       letterSpacing: 0.2,
     },
-    btnPrimaryHint: {
-      fontSize: 12,
-      color: theme.accentLightText,
-      opacity: 0.7,
-      marginTop: 2,
-    },
-
-    // Secondary — same family, slightly lighter weight
-    btnSecondary: {
-      backgroundColor: theme.accentLight,
-      borderWidth: 1,
-      borderColor: theme.accent,
-      borderRadius: 14,
-      padding: 16,
-      gap: 2,
-      opacity: 0.85,
-    },
-    btnSecondaryLabel: {
-      fontSize: 15,
-      fontWeight: '600',
-      color: theme.accentLightText,
-    },
-    btnSecondaryHint: {
-      fontSize: 12,
-      color: theme.accentLightText,
-      opacity: 0.65,
-      marginTop: 2,
-    },
-
     pressed: { opacity: 0.75, transform: [{ scale: 0.97 }] },
   });

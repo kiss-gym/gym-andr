@@ -32,16 +32,11 @@ export const DetailActionArea: React.FC<DetailActionAreaProps> = ({
         <Text style={s.btnLabel}>+ Add Exercise</Text>
       </Pressable>
       <Pressable
-        style={({ pressed }) => [
-          s.btn,
-          s.btnSecondary,
-          isActing && s.btnDisabled,
-          pressed && s.pressed,
-        ]}
+        style={({ pressed }) => [s.btn, isActing && s.btnDisabled, pressed && s.pressed]}
         onPress={onFinishSession}
         disabled={isActing}
       >
-        <Text style={s.btnLabel}>Finish Session</Text>
+        <Text style={s.btnLabel}>■ Finish Session</Text>
       </Pressable>
     </View>
   );
@@ -72,13 +67,6 @@ const styles = (theme: AppTheme): ReturnType<typeof StyleSheet.create> =>
       shadowOpacity: 0.15,
       shadowRadius: 4,
     },
-    btnSecondary: {
-      borderWidth: 1,
-      opacity: 0.85,
-      elevation: 0,
-      shadowOpacity: 0,
-    },
-    btnDisabled: { opacity: 0.35 },
     btnLabel: {
       fontSize: 15,
       fontWeight: '700',
@@ -86,4 +74,5 @@ const styles = (theme: AppTheme): ReturnType<typeof StyleSheet.create> =>
       letterSpacing: 0.2,
     },
     pressed: { opacity: 0.75, transform: [{ scale: 0.97 }] },
+    btnDisabled: { opacity: 0.35 },
   });
