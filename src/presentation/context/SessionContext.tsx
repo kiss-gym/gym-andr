@@ -144,20 +144,16 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return state.currentSession;
   }, [state.currentSession]);
 
-  const restoreSession = useCallback(
-    async (sessionId: string): Promise<void> => {
-      if (state.currentSession?.id === sessionId) return;
-      dispatch({ type: 'LOADING' });
-      try {
-        const session = await serviceLocator.getSessionById.execute(sessionId);
-        dispatch({ type: 'SESSION_SET', payload: session });
-      } catch (e) {
-        dispatch({ type: 'ERROR', payload: (e as Error).message });
-        throw e;
-      }
-    },
-    [state.currentSession?.id],
-  );
+  const restoreSession = useCallback(async (sessionId: string): Promise<void> => {
+    dispatch({ type: 'LOADING' });
+    try {
+      const session = await serviceLocator.getSessionById.execute(sessionId);
+      dispatch({ type: 'SESSION_SET', payload: session });
+    } catch (e) {
+      dispatch({ type: 'ERROR', payload: (e as Error).message });
+      throw e;
+    }
+  }, []);
 
   // Like restoreSession but always re-fetches — used on focus to pick up changes
   // made in a child screen (which has its own isolated SessionProvider).
