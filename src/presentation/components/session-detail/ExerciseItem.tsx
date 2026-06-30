@@ -38,22 +38,10 @@ export const ExerciseItem: React.FC<ExerciseItemProps> = ({
   const completedCount = completedSetCount(exercise);
   const totalSets = exercise.sets.length;
 
-  const accentColor = done ? '#534AB7' : inProgress ? theme.accent : theme.border;
-  const pillBackground =
-    // eslint-disable-next-line prettier/prettier
-    done && isSessionActive
-      ? '#1E1A3A'
-      : inProgress && isSessionActive
-        ? '#0A1F14'
-        : theme.surface;
-  const pillLabel =
-    done && isSessionActive ? 'Done' : inProgress && isSessionActive ? 'In Progress' : '';
-  const pillColor =
-    done && isSessionActive
-      ? '#AFA9EC'
-      : inProgress && isSessionActive
-        ? '#9FE1CB'
-        : theme.textMuted;
+  const accentColor = isSessionActive ? theme.accent : theme.border;
+  const pillBackground = (done || inProgress) && isSessionActive ? '#0A1F14' : theme.surface;
+  const pillLabel = done ? 'Done' : inProgress && isSessionActive ? 'In Progress' : '';
+  const pillColor = isSessionActive ? '#9FE1CB' : theme.textMuted;
 
   const visibleSets = exercise.sets.filter(
     s => s.weight !== null || s.repetitions !== null || s.isCompleted,
