@@ -201,13 +201,14 @@ export const SessionDetailScreen: React.FC<SessionDetailScreenProps> = ({ route,
   // ── Toggle set completion ─────────────────────────────────────────────────
   const handleToggleSet = useCallback(
     async (exerciseId: string, setId: string, isCompleted: boolean): Promise<void> => {
+      if (selectedId !== exerciseId) setSelectedId(exerciseId);
       try {
         await toggleSetCompletion(exerciseId, setId, isCompleted);
       } catch {
         // silent — optimistic update will revert via context
       }
     },
-    [toggleSetCompletion],
+    [toggleSetCompletion, selectedId],
   );
 
   // ── Title rename ──────────────────────────────────────────────────────────
