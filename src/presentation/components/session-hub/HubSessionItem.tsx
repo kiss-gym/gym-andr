@@ -6,7 +6,7 @@ import { useTheme } from '@presentation/theme';
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const TEAL_BORDER = '#b3f1de';
-const TEAL_ACCENT = '#78e6c0';
+const TEAL_ACCENT = '#3da682';
 const ACTIVE_BG = '#1D9E75';
 const ACTIVE_PILL_BG = '#15573c';
 const TRASH_BG_ACCENT = '#1c7551';
