@@ -6,11 +6,11 @@ import { useTheme } from '@presentation/theme';
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const TEAL_BORDER = '#b3f1de';
-const TEAL_ACCENT = '#3da682';
-const ACTIVE_BG = '#1D9E75';
-const ACTIVE_PILL_BG = '#15573c';
-const TRASH_BG_ACCENT = '#1c7551';
-const ACTIVE_META = '#baf3e0';
+const TEAL_BORDER_ACCENT = '#3b491e';
+const ACTIVE_BG = '#68a625';
+const ACTIVE_PILL_BG = '#a7bd9f';
+const TRASH_BG_ACCENT = '#395913';
+const ACTIVE_META = '#e0f3ba';
 const RIGHT_SLOT = 48; // both bin and chevron occupy the same width slot
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -67,15 +67,19 @@ export const HubSessionItem: React.FC<HubSessionItemProps> = ({
   const cardStyle = {
     backgroundColor: active ? ACTIVE_BG : theme.surface,
     borderWidth: isSelected ? 2 : 0.5,
-    borderColor: isSelected ? TEAL_ACCENT : active ? TEAL_BORDER : theme.border,
+    borderColor: isSelected ? TEAL_BORDER_ACCENT : active ? TEAL_BORDER : theme.border,
   };
   const pillStyle = {
     backgroundColor: active ? ACTIVE_PILL_BG : theme.border,
   };
-  const pillLabelColor = active ? TEAL_ACCENT : theme.textMuted;
+  const pillLabelColor = active ? TEAL_BORDER_ACCENT : theme.textMuted;
   const labelColor = active ? '#FFFFFF' : theme.textPrimary;
   const metaColor = active ? ACTIVE_META : theme.textMuted;
-  const chevronColor = active ? TEAL_ACCENT : isSelected ? TEAL_ACCENT : theme.textMuted;
+  const chevronColor = active
+    ? TEAL_BORDER_ACCENT
+    : isSelected
+      ? TEAL_BORDER_ACCENT
+      : theme.textMuted;
   const trashBg = active ? TRASH_BG_ACCENT : theme.background;
 
   return (
@@ -166,7 +170,7 @@ const s = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 3,
-    backgroundColor: TEAL_ACCENT,
+    backgroundColor: TEAL_BORDER_ACCENT,
   },
   pillLabel: {
     fontSize: 9,
